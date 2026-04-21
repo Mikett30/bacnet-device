@@ -11,13 +11,13 @@ import {
 
 export interface BDNumericValueOpts {
   name: string,
-  unit: EngineeringUnits,
-  writable?: boolean,
+  unit?: EngineeringUnits,
+  writable?: Partial<Record<PropertyIdentifier, boolean>>,
   description?: string,
   presentValue: number,
   covIncrement?: number,
-  minPresentValue: number,
-  maxPresentValue: number,
+  minPresentValue?: number,
+  maxPresentValue?: number,
 }
 
 export type BDNumericApplicationTag =
@@ -48,19 +48,19 @@ export class BDNumericObject<Tag extends BDNumericApplicationTag> extends BDObje
     super(type, opts);
 
     this.presentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.PRESENT_VALUE, tag, opts.presentValue));
+      PropertyIdentifier.PRESENT_VALUE, tag, opts.presentValue, opts?.writable?.PRESENT_VALUE ?? false));
 
     this.engineeringUnit = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.UNITS, ApplicationTag.ENUMERATED, opts.unit));
+      PropertyIdentifier.UNITS, ApplicationTag.ENUMERATED, opts.unit, opts?.writable?.UNITS ?? false));
 
     this.covIncrement = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.COV_INCREMENT, tagToCovIncrementTag[tag], opts.covIncrement ?? 0));
+      PropertyIdentifier.COV_INCREMENT, tagToCovIncrementTag[tag], opts.covIncrement ?? 0, opts?.writable?.COV_INCREMENT ?? false));
 
     this.maxPresentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.MAX_PRES_VALUE, tag, opts.maxPresentValue));
+      PropertyIdentifier.MAX_PRES_VALUE, tag, opts.maxPresentValue, opts?.writable?.MAX_PRES_VALUE ?? false));
 
     this.minPresentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.MIN_PRES_VALUE, tag, opts.minPresentValue));
+      PropertyIdentifier.MIN_PRES_VALUE, tag, opts.minPresentValue, opts?.writable?.MIN_PRES_VALUE ?? false));
 
   }
 }

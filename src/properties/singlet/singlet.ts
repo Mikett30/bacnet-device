@@ -21,9 +21,10 @@ export class BDSingletProperty<
   #writable: boolean;
   #data: BACNetAppData<Tag, Type>;
 
-  constructor(identifier: PropertyIdentifier, type: Tag, value: Type, encoding?: CharacterStringEncoding) {
+  constructor(identifier: PropertyIdentifier, type: Tag, value: Type, writable: boolean = false, encoding?: CharacterStringEncoding) {
     super(identifier);
     this.#data = { type, value, encoding };
+    this.#writable = writable ?? false;
   }
 
   getData(ctx?: BDPropertyAccessContext): BACNetAppData<Tag, Type> {
@@ -45,6 +46,12 @@ export class BDSingletProperty<
   }
 
   /**
+   * Getter and setter for property writability.
+   */
+  get writable(): boolean { return this.#writable; }
+  set writable(value: boolean): void { this.#writable = value; }
+
+  /**
    *
    * @internal
    */
@@ -57,6 +64,8 @@ export class BDSingletProperty<
    * @internal
    */
   async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[]) {
+    if(!this.writable) { throw new BDError('property is not writable', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
+
     if (Array.isArray(data)) {
       if (data.length !== 1) {
         throw new BDError('property is not an array or list', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY);
@@ -66,5 +75,4 @@ export class BDSingletProperty<
     }
     await this.setData(data);
   }
-
 }

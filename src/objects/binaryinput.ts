@@ -10,27 +10,24 @@ import {
 
 export interface BDBinaryInputOpts {
   name: string,
-  writable: boolean,
+  writable?: Partial<Record<PropertyIdentifier, boolean>>,
   description?: string,
   presentValue?: BinaryPV,
-}
-
-const writableDefaults: Record<keyof BDBinaryInputOpts, boolean> = {
-  name: false,
-  description: false,
-  presentValue: false,
-  covIncrement: false
+  activeText?: string,
+  inactiveText?: string,
 }
 
 export class BDBinaryInput extends BDObject {
 
   readonly presentValue: BDSingletProperty<ApplicationTag.ENUMERATED, BinaryPV>;
+  readonly activeText: BDSingletProperty<ApplicationTag.CHARACTER_STRING, string>;
+  readonly inactiveText: BDSingletProperty<ApplicationTag.CHARACTER_STRING, string>;
 
   constructor(opts: BDBinaryInputOpts) {
     super(ObjectType.BINARY_INPUT, opts);
 
-    this.presentValue = this.addProperty(new BDSingletProperty<ApplicationTag.BOOLEAN, BinaryPV>(
-      PropertyIdentifier.PRESENT_VALUE, ApplicationTag.BOOLEAN, opts.presentValue ?? BinaryPV.INACTIVE));
-
+    this.presentValue = this.addProperty(new BDSingletProperty<ApplicationTag.BOOLEAN, BinaryPV>(PropertyIdentifier.PRESENT_VALUE, ApplicationTag.BOOLEAN, opts.presentValue ?? BinaryPV.INACTIVE, opts.writable?.PRESENT_VALUE ?? false));
+    this.activeText = this.addProperty(new BDSingletProperty<ApplicationTag.CHARACTER_STRING, string>(PropertyIdentifier.ACTIVE_TEXT, ApplicationTag.CHARACTER_STRING, opts.activeText ?? 'Active', opts.writable?.ACTIVE_TEXT ?? false));
+    this.inactiveText = this.addProperty(new BDSingletProperty<ApplicationTag.CHARACTER_STRING, string>(PropertyIdentifier.INACTIVE_TEXT, ApplicationTag.CHARACTER_STRING, opts.inactiveText ?? 'Inactive', opts.writable?.INACTIVE_TEXT ?? false));
   }
 }
