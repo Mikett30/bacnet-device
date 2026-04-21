@@ -72,8 +72,8 @@ import { SubscriptionStore } from './subscriptionstore.js';
 import { getObjectUID, getPropertyUID, type BDObjectUID } from '../../uids.js';
 import { BDNumericObject } from '../numeric/numeric.js';
 
-const { default: BACnetClient } = bacnet;
-
+//const { default: BACnetClient } = bacnet;
+const BACnetClient = bacnet;
 
 /**
  * Implements a BACnet Device object
@@ -176,7 +176,7 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
    * @see {@link https://kargs.net/BACnet/Foundations2012-BACnetDeviceID.pdf}
    */
   constructor(instance: number, opts: BDDeviceOpts) {
-    super(ObjectType.DEVICE, opts.name, opts.description);
+    super(ObjectType.DEVICE, opts);
 
     this.#vendorId = opts.vendorId ?? 0;
     this.#knownDevices = new Map();
@@ -346,6 +346,9 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
       PropertyIdentifier.SYSTEM_STATUS, ApplicationTag.ENUMERATED, false, DeviceStatus.OPERATIONAL));
 
   }
+
+  /*** THIS FUNCTION WAS ADDED FOR THE API ***/
+  getObjects(): Array<any> { return [...this.#objects.values()]; }
 
   // ==========================================================================
   //                               PUBLIC METHODS
@@ -723,11 +726,12 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
     this.#wrapReqHandler(req, async () => {
       const { header, service, invokeId, payload: { objectId, property, value } } = req;
       const _value = value?.value;
+      const _priority = value?.priority;
       const _property = value?.property ?? property;
       if (!_value || !_property) {
         throw new BDError('inconsistent parameters', ErrorCode.INCONSISTENT_PARAMETERS, ErrorClass.SERVICES);
       }
-      await this.#getObjectByIdOrThrow(objectId).___writeProperty(_property, _value);
+      await this.#getObjectByIdOrThrow(objectId).___writeProperty(_property, _value, _priority);
       this.#client.simpleAckResponse(header!.sender, service!, invokeId!);
     });
   };

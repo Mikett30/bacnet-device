@@ -108,24 +108,26 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
   readonly statusFlags: BDSingletProperty<ApplicationTag.BIT_STRING>;
   readonly eventState: BDSingletProperty<ApplicationTag.ENUMERATED, EventState>;
   readonly reliability: BDSingletProperty<ApplicationTag.ENUMERATED, Reliability>;
+  readonly #writable: boolean | Record<string, boolean>;
 
   /**
    * Creates a new BACnet object
    *
    */
-  constructor(type: ObjectType, name: string, description: string = '') {
+  constructor(type: ObjectType, { name, description = "", writable = false }: { name: string, description?: string, writable?: boolean | Record<string, boolean> }) {
 
     super();
 
+    this.#writable = writable;
     this.#queue = new TaskQueue();
     this.#properties = new Map();
     this.#propertyList = [];
 
     this.objectName = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.OBJECT_NAME, ApplicationTag.CHARACTER_STRING, false, name));
+      PropertyIdentifier.OBJECT_NAME, ApplicationTag.CHARACTER_STRING, name));
 
     this.objectType = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.OBJECT_TYPE, ApplicationTag.ENUMERATED, false, type));
+      PropertyIdentifier.OBJECT_TYPE, ApplicationTag.ENUMERATED, type));
 
     this.objectIdentifier = this.addProperty(new BDPolledSingletProperty(
       PropertyIdentifier.OBJECT_IDENTIFIER, ApplicationTag.OBJECTIDENTIFIER, () => this.identifier.value));
@@ -134,21 +136,38 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
       PropertyIdentifier.PROPERTY_LIST, () => this.#propertyList));
 
     this.description = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, false, description));
+      PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, description));
 
     this.outOfService = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.OUT_OF_SERVICE, ApplicationTag.BOOLEAN, false, false));
+      PropertyIdentifier.OUT_OF_SERVICE, ApplicationTag.BOOLEAN, false));
 
     this.statusFlags = this.addProperty(new BDSingletProperty<ApplicationTag.BIT_STRING, StatusFlagsBitString>(
-      PropertyIdentifier.STATUS_FLAGS, ApplicationTag.BIT_STRING, false, new StatusFlagsBitString()));
+      PropertyIdentifier.STATUS_FLAGS, ApplicationTag.BIT_STRING, new StatusFlagsBitString()));
 
     this.eventState = this.addProperty(new BDSingletProperty<ApplicationTag.ENUMERATED, EventState>(
-      PropertyIdentifier.EVENT_STATE, ApplicationTag.ENUMERATED, false, EventState.NORMAL));
+      PropertyIdentifier.EVENT_STATE, ApplicationTag.ENUMERATED, EventState.NORMAL));
 
     this.reliability = this.addProperty(new BDSingletProperty<ApplicationTag.ENUMERATED, Reliability>(
-      PropertyIdentifier.RELIABILITY, ApplicationTag.ENUMERATED, false, Reliability.NO_FAULT_DETECTED));
+      PropertyIdentifier.RELIABILITY, ApplicationTag.ENUMERATED, Reliability.NO_FAULT_DETECTED));
 
   }
+
+  get writable() {
+    // Create dynamic object with all property identifiers as keys and their writability as boolean values.
+    // If this.#writable is a boolean, use that value for all properties, otherwise check if the property identifier
+    // is included in this.#writable object, defaulting to false if not specified.
+    const writable = Object.fromEntries([...this.#properties.keys()].map(key => {
+        return [key, !!(typeof this.#writable === "boolean" ? this.#writable : this.#writable?.[key])];
+    }));
+    
+    // Return a Proxy to allow dynamic checking and updating of property writability.
+    return {
+        ...writable,
+        set: (property, value) => {
+            if(property in writable) { this.#writable = { ...writable, [property]: !!value }; }
+        }
+    };
+}
 
   get identifier(): BACNetAppData<ApplicationTag.OBJECTIDENTIFIER> {
     if (this.#identifier) {
@@ -203,13 +222,20 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
    *
    * @param identifier - The identifier of the property to write
    * @param value - The value to write to the property
+   * @param priority - The priority of the write operation (if applicable)
    * @throws BACnetError if the property does not exist
    * @internal
    */
-  async ___writeProperty(identifier: BACNetPropertyID, value: BACNetAppData | BACNetAppData[]): Promise<void> {
+  async ___writeProperty(identifier: BACNetPropertyID, value: BACNetAppData | BACNetAppData[], priority: number): Promise<void> {
     const property = this.#properties.get(identifier.id as PropertyIdentifier);
     // TODO: test/validate value before setting it!
     if (property) {
+      // Handle priority array logic for points that have a priority array when writing to the Present_Value.
+      if(PropertyIdentifier[identifier.id] === "PRESENT_VALUE" && this?.priorityArray) {
+          const highestPriority = await this.priorityArray.___writeData(value, priority);
+          this.currentCommandPriority.setValue(highestPriority);
+          value = this.priorityArray.getData(highestPriority);
+      }
       await property.___writeData(value);
     } else {
       throw new BDError('unknown property', ErrorCode.UNKNOWN_PROPERTY, ErrorClass.PROPERTY);

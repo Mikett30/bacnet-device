@@ -38,7 +38,7 @@ export class BDMultiStateValue extends BDObject {
 
     assert(opts.states.length > 0, 'states array must not be empty');
 
-    super(ObjectType.MULTI_STATE_VALUE, opts.name, opts.description);
+    super(ObjectType.MULTI_STATE_VALUE, opts);
 
     const numberOfStatesValue = opts.states.length;
 
@@ -53,7 +53,7 @@ export class BDMultiStateValue extends BDObject {
       PropertyIdentifier.STATE_TEXT, () => stateTextData));
 
     this.presentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.PRESENT_VALUE, ApplicationTag.UNSIGNED_INTEGER, opts.writable ?? false, 1));
+      PropertyIdentifier.PRESENT_VALUE, ApplicationTag.UNSIGNED_INTEGER, 1));
 
     this.presentValue.on('beforecov', (data, prop) => {
       if (data.value < 1 || data.value > numberOfStatesValue) {

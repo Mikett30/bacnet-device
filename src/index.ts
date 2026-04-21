@@ -59,6 +59,8 @@ export * from './objects/numeric/analogvalue.js';
 export * from './objects/numeric/integervalue.js';
 export * from './objects/numeric/positiveintegervalue.js';
 
+export * from './objects/binaryoutput.js';
+export * from './objects/binaryinput.js';
 export * from './objects/binaryvalue.js';
 
 export * from './objects/temporal/timevalue.js';

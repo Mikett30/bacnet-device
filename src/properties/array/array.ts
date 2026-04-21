@@ -18,24 +18,25 @@ export class BDArrayProperty<
   Type extends ApplicationTagValueTypeMap[Tag] = ApplicationTagValueTypeMap[Tag],
 > extends BDAbstractArrayProperty<Tag, Type> {
 
-  readonly #writable: boolean;
-
   #data: BACNetAppData<Tag, Type>[];
 
-  constructor(identifier: PropertyIdentifier, writable: boolean, data: BACNetAppData<Tag, Type>[]) {
+  constructor(identifier: PropertyIdentifier) {
     super(identifier);
-    this.#data = data;
-    this.#writable = writable;
+    this.#data = new Array(16).fill({ type: ApplicationTag.NULL, value: null });
   }
 
-  getData(ctx?: BDPropertyAccessContext) {
+  getData(priority: number, ctx?: BDPropertyAccessContext) {
+    if(Number.isInteger(priority) && priority >= 1 && priority <= this.#data.length) {
+      return this.#data[priority - 1];
+    }
     return this.#data;
   }
 
-  async setData(data: BACNetAppData<Tag, Type>[]) {
+  async setData(data: BACNetAppData<Tag, Type>[], priority: number) {
     await this.___asyncEmitSeries(true, 'beforecov', data, this);
-    this.#data = data;
+    this.#data[priority - 1] = data;
     await this.___asyncEmitSeries(false, 'aftercov', data, this);
+    return this.getActivePriority();
   }
 
   /**
@@ -43,13 +44,24 @@ export class BDArrayProperty<
    * @internal
    */
   async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[]) {
-    if (!this.#writable) {
-      throw new BDError('not writable', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY);
+    if (!Number.isInteger(priority) || priority < 1 || priority > this.#data.length) {
+      throw new BDError('invalid priority', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY);
     }
-    if (!Array.isArray(data)) {
-      data = [data];
+    if (Array.isArray(data)) {
+      if (data.length !== 1) {
+          throw new BDError('property is not an array or list', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY);
+      } else {
+          data = data[0];
+      }
     }
-    await this.setData(data);
+    return this.setData(data, priority);
   }
-
+  
+  /**
+   * 
+   * @returns Returns the highest active priority level, or 0 if not being controlled.
+   */
+  getActivePriority() {
+    return this.#data.findIndex(val => val.type !== ApplicationTag.NULL) + 1;
+  }
 }

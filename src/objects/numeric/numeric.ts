@@ -45,22 +45,22 @@ export class BDNumericObject<Tag extends BDNumericApplicationTag> extends BDObje
   readonly minPresentValue: BDSingletProperty<Tag>;
 
   constructor(type: ObjectType, tag: Tag, opts: BDNumericValueOpts) {
-    super(type, opts.name, opts.description);
+    super(type, opts);
 
     this.presentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.PRESENT_VALUE, tag, opts.writable ?? false, opts.presentValue));
+      PropertyIdentifier.PRESENT_VALUE, tag, opts.presentValue));
 
     this.engineeringUnit = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.UNITS, ApplicationTag.ENUMERATED, false, opts.unit));
+      PropertyIdentifier.UNITS, ApplicationTag.ENUMERATED, opts.unit));
 
     this.covIncrement = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.COV_INCREMENT, tagToCovIncrementTag[tag], true, opts.covIncrement ?? 0));
+      PropertyIdentifier.COV_INCREMENT, tagToCovIncrementTag[tag], opts.covIncrement ?? 0));
 
     this.maxPresentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.MAX_PRES_VALUE, tag, false, opts.maxPresentValue));
+      PropertyIdentifier.MAX_PRES_VALUE, tag, opts.maxPresentValue));
 
     this.minPresentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.MIN_PRES_VALUE, tag, false, opts.minPresentValue));
+      PropertyIdentifier.MIN_PRES_VALUE, tag, opts.minPresentValue));
 
   }
 }

@@ -8,27 +8,29 @@ import {
   BinaryPV,
 } from '@bacnet-js/client';
 
-export interface BDBinaryValueOpts {
+export interface BDBinaryOutputOpts {
   name: string,
   writable: boolean,
   description?: string,
   presentValue?: BinaryPV,
 }
 
-const writableDefaults: Record<keyof BDBinaryValueOpts, boolean> = {
+const writableDefaults: Record<keyof BDBinaryOutputOpts, boolean> = {
   name: false,
   description: false,
   presentValue: false,
+  covIncrement: false
 }
 
-export class BDBinaryValue extends BDObject {
+export class BDBinaryOutput extends BDObject {
+
   readonly relinquishedDefault: BDSingletProperty<ApplicationTag.BOOLEAN, boolean>;
   readonly priorityArray: BDArrayProperty<ApplicationTag.NULL>;
   readonly currentCommandPriority: BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER, number>;
   readonly presentValue: BDSingletProperty<ApplicationTag.ENUMERATED, BinaryPV>;
 
-  constructor(opts: BDBinaryValueOpts) {
-    super(ObjectType.BINARY_VALUE, opts);
+  constructor(opts: BDBinaryOutputOpts) {
+    super(ObjectType.BINARY_OUTPUT, opts);
 
     this.presentValue = this.addProperty(new BDSingletProperty<ApplicationTag.BOOLEAN, BinaryPV>(
       PropertyIdentifier.PRESENT_VALUE, ApplicationTag.BOOLEAN, opts.presentValue ?? BinaryPV.INACTIVE));
