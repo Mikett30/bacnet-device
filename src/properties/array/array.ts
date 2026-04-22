@@ -54,12 +54,10 @@ export class BDArrayProperty<
    */
   async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[], priority: number) {
     if (!Number.isInteger(priority) || priority < 1 || priority > this.#data.length) {
-      console.log('invalid priority', priority); // DEBUG
       throw new BDError('invalid priority', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY);
     }
     if (Array.isArray(data)) {
       if (data.length !== 1) {
-        console.log('invalid array length', data.length); // DEBUG
           throw new BDError('property is not an array or list', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY);
       } else {
           data = data[0];

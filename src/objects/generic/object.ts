@@ -123,7 +123,6 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
 
     // If writable is set to true, make all properties writable by default.
     // Otherwise, use the provided writable object or default to all properties being read-only.
-    const log = type === ObjectType.MULTI_STATE_VALUE; // DEBUG
     writable = typeof writable === "boolean" ? (writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : writable;
 
     this.objectName = this.addProperty(new BDSingletProperty(
