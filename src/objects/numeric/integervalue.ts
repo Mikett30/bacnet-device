@@ -20,8 +20,8 @@ export class BDIntegerValue extends BDNumericObject<ApplicationTag.SIGNED_INTEGE
     super(ObjectType.INTEGER_VALUE, ApplicationTag.SIGNED_INTEGER, {
       ...opts,
       presentValue: opts.presentValue ?? 0,
-      maxPresentValue: opts.maxPresentValue ?? 2_147_483_647,
-      minPresentValue: opts.minPresentValue ?? -2_147_483_648,
+      maxPresentValue: Math.min(opts.maxPresentValue ?? Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
+      minPresentValue: Math.max(opts.minPresentValue ?? Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER),
     });
   }
 }

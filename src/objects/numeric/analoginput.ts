@@ -1,15 +1,12 @@
-
 import {
-  type BDAnalogValueOpts,
-  BDAnalogValue,
-  } from './analogvalue.ts';
-
-import {
+  ApplicationTag,
   ObjectType,
 } from '@bacnet-js/client';
 
-export interface BDAnalogInputOpts extends BDAnalogValueOpts {
-}
+import {
+  type BDNumericValueOpts,
+  BDNumericObject,
+} from './numeric.ts';
 
 /**
  * Implements a BACnet Analog Input object
@@ -31,13 +28,13 @@ export interface BDAnalogInputOpts extends BDAnalogValueOpts {
  *
  * @extends BDObject
  */
-export class BDAnalogInput extends BDAnalogValue {
+export class BDAnalogInput extends BDNumericObject<ApplicationTag.REAL> {
 
   /**
    * Creates a new BACnet Analog Input object
    */
-  constructor(opts: BDAnalogInputOpts) {
-    super(opts, ObjectType.ANALOG_INPUT);
+  constructor(opts: BDNumericValueOpts) {
+    super(ObjectType.ANALOG_INPUT, ApplicationTag.REAL, opts);
   }
 
 }

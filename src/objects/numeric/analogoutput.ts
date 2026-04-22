@@ -5,19 +5,26 @@ import {
 } from '../../properties/index.ts';
 
 import {
-  type BDAnalogValueOpts,
-  BDAnalogValue,
-  } from './analogvalue.ts';
-
-import {
   type BACNetAppData,
   ObjectType,
   ApplicationTag,
   PropertyIdentifier,
+  EngineeringUnits,
 } from '@bacnet-js/client';
 
-export interface BDAnalogOutputOpts extends BDAnalogValueOpts {
+import { BDNumericObject, type BDNumericValueOpts } from './numeric.ts';
+import type { BDWritableProperties } from '../generic/object.ts';
 
+export interface BDAnalogOutputOpts {
+  name: string,
+  writable?: boolean | BDWritableProperties | undefined,
+  description?: string | undefined,
+  presentValue?: number | undefined,
+  relinquishDefault?: number | undefined,
+  minPresentValue?: number | undefined,
+  maxPresentValue?: number | undefined,
+  covIncrement?: number | undefined,
+  units?: EngineeringUnits | undefined,
 }
 
 /**
@@ -41,7 +48,7 @@ export interface BDAnalogOutputOpts extends BDAnalogValueOpts {
  *
  * @extends BDObject
  */
-export class BDAnalogOutput extends BDAnalogValue {
+export class BDAnalogOutput extends BDNumericObject<ApplicationTag.REAL> {
 
   /**
    * The default value for the present value when all priority array slots are NULL
@@ -72,18 +79,13 @@ export class BDAnalogOutput extends BDAnalogValue {
   /**
    * Creates a new BACnet Analog Output object
    */
-  constructor(opts: BDAnalogOutputOpts) {
-    super(opts, ObjectType.ANALOG_OUTPUT);
-
-    this.relinquishDefault = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.RELINQUISH_DEFAULT, ApplicationTag.REAL, false, 0));
-
-    this.priorityArray = this.addProperty(new BDArrayProperty<ApplicationTag.REAL | ApplicationTag.NULL>(
-      PropertyIdentifier.PRIORITY_ARRAY, false, new Array(16).fill({ type: ApplicationTag.NULL, value: null } as BACNetAppData<ApplicationTag.REAL | ApplicationTag.NULL>)));
-
-    this.currentCommandPriority = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.CURRENT_COMMAND_PRIORITY, ApplicationTag.UNSIGNED_INTEGER, false, 16));
-
+  constructor(opts: BDAnalogOutputOpts) {    
+        opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
+    
+        super(ObjectType.ANALOG_OUTPUT, ApplicationTag.REAL, opts as BDNumericValueOpts);
+    
+        this.relinquishDefault = this.addProperty(new BDSingletProperty<ApplicationTag.REAL>(PropertyIdentifier.RELINQUISH_DEFAULT, ApplicationTag.REAL, opts.relinquishDefault ?? 0, opts.writable?.RELINQUISH_DEFAULT ?? false));
+        this.currentCommandPriority = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>(PropertyIdentifier.CURRENT_COMMAND_PRIORITY, ApplicationTag.UNSIGNED_INTEGER, 0, false));
+        this.priorityArray = this.addProperty(new BDArrayProperty(PropertyIdentifier.PRIORITY_ARRAY));
   }
-
 }

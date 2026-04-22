@@ -1,3 +1,5 @@
+import { BDSingletProperty, BDArrayProperty } from '../../properties/index.ts';
+import { BDObject, type BDWritableProperties } from '../generic/object.ts';
 
 import {
   type BDNumericValueOpts,
@@ -6,27 +8,35 @@ import {
 
 import {
   ApplicationTag,
+  EngineeringUnits,
   ObjectType,
+  PropertyIdentifier,
 } from '@bacnet-js/client';
 
-export interface BDAnalogValueOpts extends Omit<BDNumericValueOpts, 'maxPresentValue' | 'minPresentValue' | 'presentValue'> {
-  presentValue?: number;
-  maxPresentValue?: number;
-  minPresentValue?: number;
+export interface BDAnalogValueOpts {
+  name: string,
+  writable?: boolean | BDWritableProperties | undefined,
+  description?: string | undefined,
+  presentValue?: number | undefined,
+  relinquishDefault?: number | undefined,
+  minPresentValue?: number | undefined,
+  maxPresentValue?: number | undefined,
+  covIncrement?: number | undefined,
+  units?: EngineeringUnits | undefined,
 }
 
-export type BDAnalogValueObjectType =
-  | ObjectType.ANALOG_VALUE
-  | ObjectType.ANALOG_INPUT
-  | ObjectType.ANALOG_OUTPUT;
-
 export class BDAnalogValue extends BDNumericObject<ApplicationTag.REAL> {
-  constructor(opts: BDAnalogValueOpts, type: BDAnalogValueObjectType = ObjectType.ANALOG_VALUE) {
-    super(type, ApplicationTag.REAL, {
-      ...opts,
-      presentValue: opts.presentValue ?? 0,
-      maxPresentValue: opts.maxPresentValue ?? Number.MAX_SAFE_INTEGER,
-      minPresentValue: opts.minPresentValue ?? Number.MIN_SAFE_INTEGER,
-    });
+  readonly relinquishDefault: BDSingletProperty<ApplicationTag.REAL>;
+  readonly priorityArray: BDArrayProperty<ApplicationTag.NULL | ApplicationTag.REAL>;
+  readonly currentCommandPriority: BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>;
+
+  constructor(opts: BDAnalogValueOpts) {
+    opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
+
+    super(ObjectType.ANALOG_VALUE, ApplicationTag.REAL, opts as BDNumericValueOpts);
+
+    this.relinquishDefault = this.addProperty(new BDSingletProperty<ApplicationTag.REAL>(PropertyIdentifier.RELINQUISH_DEFAULT, ApplicationTag.REAL, opts.relinquishDefault ?? 0, opts.writable?.RELINQUISH_DEFAULT ?? false));
+    this.currentCommandPriority = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>(PropertyIdentifier.CURRENT_COMMAND_PRIORITY, ApplicationTag.UNSIGNED_INTEGER, 0, false));
+    this.priorityArray = this.addProperty(new BDArrayProperty(PropertyIdentifier.PRIORITY_ARRAY));
   }
 }
