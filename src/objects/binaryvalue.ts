@@ -1,6 +1,6 @@
 
-import { BDSingletProperty, BDArrayProperty } from '../properties/index.js';
-import { BDObject } from './generic/object.js';
+import { BDSingletProperty, BDArrayProperty } from '../properties/index.ts';
+import { BDObject, type BDWritableProperties } from './generic/object.ts';
 import {
   ObjectType,
   ApplicationTag,
@@ -10,7 +10,7 @@ import {
 
 export interface BDBinaryValueOpts {
   name: string,
-  writable?: Partial<Record<PropertyIdentifier, boolean>>,
+  writable?: BDWritableProperties,
   description?: string,
   presentValue?: BinaryPV,
   activeText?: string,

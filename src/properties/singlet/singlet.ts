@@ -9,22 +9,21 @@ import {
   ApplicationTag,
 } from '@bacnet-js/client';
 
-import { BDError } from '../../errors.js';
-import { BDAbstractSingletProperty } from './abstract.js';
-import { type BDPropertyAccessContext } from '../types.js';
+import { BDError } from '../../errors.ts';
+import { BDAbstractSingletProperty } from './abstract.ts';
+import { type BDPropertyAccessContext } from '../types.ts';
 
 export class BDSingletProperty<
   Tag extends ApplicationTag,
   Type extends ApplicationTagValueTypeMap[Tag] = ApplicationTagValueTypeMap[Tag],
 > extends BDAbstractSingletProperty<Tag, Type> {
 
-  #writable: boolean;
   #data: BACNetAppData<Tag, Type>;
 
-  constructor(identifier: PropertyIdentifier, type: Tag, value: Type, writable: boolean = false, encoding?: CharacterStringEncoding) {
+  constructor(identifier: PropertyIdentifier, type: Tag, value: Type, writable: boolean = false, encoding?: CharacterStringEncoding, debug: boolean = false) {
     super(identifier);
     this.#data = { type, value, encoding };
-    this.#writable = writable ?? false;
+    this.writable = this.writable = !!writable;
   }
 
   getData(ctx?: BDPropertyAccessContext): BACNetAppData<Tag, Type> {
@@ -44,12 +43,6 @@ export class BDSingletProperty<
   async setValue(value: Type): Promise<void> {
     await this.setData({ ...this.getData(), value });
   }
-
-  /**
-   * Getter and setter for property writability.
-   */
-  get writable(): boolean { return this.#writable; }
-  set writable(value: boolean): void { this.#writable = value; }
 
   /**
    *

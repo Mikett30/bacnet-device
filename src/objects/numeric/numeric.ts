@@ -1,6 +1,6 @@
 
-import { BDSingletProperty } from '../../properties/index.js';
-import { BDObject } from '../generic/object.js';
+import { BDSingletProperty } from '../../properties/index.ts';
+import { BDObject, type BDWritableProperties } from '../generic/object.ts';
 import {
   ObjectType,
   ApplicationTag,
@@ -12,7 +12,7 @@ import {
 export interface BDNumericValueOpts {
   name: string,
   unit?: EngineeringUnits,
-  writable?: Partial<Record<PropertyIdentifier, boolean>>,
+  writable?: boolean | BDWritableProperties,
   description?: string,
   presentValue: number,
   covIncrement?: number,
@@ -47,20 +47,22 @@ export class BDNumericObject<Tag extends BDNumericApplicationTag> extends BDObje
   constructor(type: ObjectType, tag: Tag, opts: BDNumericValueOpts) {
     super(type, opts);
 
+    opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
+
     this.presentValue = this.addProperty(new BDSingletProperty(
       PropertyIdentifier.PRESENT_VALUE, tag, opts.presentValue, opts?.writable?.PRESENT_VALUE ?? false));
 
     this.engineeringUnit = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.UNITS, ApplicationTag.ENUMERATED, opts.unit, opts?.writable?.UNITS ?? false));
+      PropertyIdentifier.UNITS, ApplicationTag.ENUMERATED, opts?.unit ?? 95, opts?.writable?.UNITS ?? false));
 
     this.covIncrement = this.addProperty(new BDSingletProperty(
       PropertyIdentifier.COV_INCREMENT, tagToCovIncrementTag[tag], opts.covIncrement ?? 0, opts?.writable?.COV_INCREMENT ?? false));
 
     this.maxPresentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.MAX_PRES_VALUE, tag, opts.maxPresentValue, opts?.writable?.MAX_PRES_VALUE ?? false));
+      PropertyIdentifier.MAX_PRES_VALUE, tag, opts.maxPresentValue ?? Number.MAX_SAFE_INTEGER, opts?.writable?.MAX_PRES_VALUE ?? false));
 
     this.minPresentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.MIN_PRES_VALUE, tag, opts.minPresentValue, opts?.writable?.MIN_PRES_VALUE ?? false));
+      PropertyIdentifier.MIN_PRES_VALUE, tag, opts.minPresentValue ?? Number.MIN_SAFE_INTEGER, opts?.writable?.MIN_PRES_VALUE ?? false));
 
   }
 }

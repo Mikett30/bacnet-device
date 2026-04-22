@@ -5,9 +5,9 @@ import {
   BDSingletProperty,
   BDPolledArrayProperty,
   BDPolledSingletProperty,
-} from '../properties/index.js';
+} from '../properties/index.ts';
 
-import { BDObject } from './generic/object.js';
+import { BDObject, type BDWritableProperties } from './generic/object.ts';
 
 import {
   ObjectType,
@@ -18,12 +18,12 @@ import {
   type BACNetAppData,
 } from '@bacnet-js/client';
 
-import { BDError } from '../errors.js';
+import { BDError } from '../errors.ts';
 
 export interface BDMultiStateValueOpts {
   name: string,
   states: [first: string, ...rest: string[]],
-  writable?: Partial<Record<PropertyIdentifier, boolean>>,
+  writable?: boolean | BDWritableProperties,
   description?: string,
   presentValue?: number,
 }
@@ -48,8 +48,9 @@ export class BDMultiStateValue extends BDObject {
     });
 
     this.stateText = this.addProperty(new BDPolledArrayProperty<ApplicationTag.CHARACTER_STRING>(PropertyIdentifier.STATE_TEXT, () => stateTextData));
-    this.presentValue = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER, number>(PropertyIdentifier.PRESENT_VALUE, ApplicationTag.UNSIGNED_INTEGER, 1, opts.writable?.PRESENT_VALUE ?? false));
-
+    
+    this.presentValue = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER, number>(PropertyIdentifier.PRESENT_VALUE, ApplicationTag.UNSIGNED_INTEGER, 1, typeof opts.writable === "boolean" ? opts.writable : opts.writable?.PRESENT_VALUE ?? false));
+    
     this.presentValue.on('beforecov', (data, prop) => {
       if (data.value < 1 || data.value > numberOfStatesValue) {
         throw new BDError('state index out of range', ErrorCode.INCONSISTENT_PARAMETERS, ErrorClass.PROPERTY);

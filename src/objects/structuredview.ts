@@ -2,9 +2,9 @@
 import {
   BDSingletProperty,
   BDPolledArrayProperty,
-} from '../properties/index.js';
+} from '../properties/index.ts';
 
-import { BDObject } from './generic/object.js';
+import { BDObject } from './generic/object.ts';
 
 import {
   ObjectType,
@@ -16,7 +16,7 @@ import {
 
 import {
   type BDDevice,
-} from './device/device.js';
+} from './device/device.ts';
 
 export interface BDStructuredViewOpts {
   name: string,

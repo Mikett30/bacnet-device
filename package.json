@@ -20,7 +20,7 @@
   "description": "A TypeScript library for implementing BACnet IP devices in Node.js.",
   "devDependencies": {
     "@types/debug": "^4.1.12",
-    "@types/node": "^24.0.13",
+    "@types/node": "^24.12.2",
     "typedoc": "^0.28.7",
     "typescript": "^5.8.3"
   },

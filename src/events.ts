@@ -1,5 +1,5 @@
 
-import { events as debug } from './debug.js';
+import { events as debug } from './debug.ts';
 
 export type EventMap = Record<string, any[]>;
 

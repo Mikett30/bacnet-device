@@ -2,7 +2,7 @@
 import {
   type BDAnalogValueOpts,
   BDAnalogValue,
-  } from './analogvalue.js';
+  } from './analogvalue.ts';
 
 import {
   ObjectType,

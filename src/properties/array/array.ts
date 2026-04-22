@@ -8,15 +8,17 @@ import {
   PropertyIdentifier,
 } from '@bacnet-js/client';
 
-import { BDError } from '../../errors.js';
-import { type BDPropertyAccessContext } from './../types.js';
+import { BDError } from '../../errors.ts';
+import { type BDPropertyAccessContext } from './../types.ts';
 
-import { BDAbstractArrayProperty } from './abstract.js';
+import { BDAbstractArrayProperty } from './abstract.ts';
 
 export class BDArrayProperty<
   Tag extends ApplicationTag,
   Type extends ApplicationTagValueTypeMap[Tag] = ApplicationTagValueTypeMap[Tag],
 > extends BDAbstractArrayProperty<Tag, Type> {
+
+  override getData(ctx?: BDPropertyAccessContext): BACNetAppData<Tag, Type>[] { return this.#data; }
 
   #data: BACNetAppData<Tag, Type>[];
 
@@ -25,18 +27,25 @@ export class BDArrayProperty<
     this.#data = new Array(16).fill({ type: ApplicationTag.NULL, value: null });
   }
 
-  getData(priority: number, ctx?: BDPropertyAccessContext) {
+  getDataAtPriority(priority: number, ctx?: BDPropertyAccessContext) {  
     if(Number.isInteger(priority) && priority >= 1 && priority <= this.#data.length) {
       return this.#data[priority - 1];
     }
-    return this.#data;
+    throw new BDError('invalid priority', ErrorCode.READ_ACCESS_DENIED, ErrorClass.PROPERTY);
   }
 
-  async setData(data: BACNetAppData<Tag, Type>[], priority: number) {
+  async setData(data: BACNetAppData<Tag, Type>[]) {
     await this.___asyncEmitSeries(true, 'beforecov', data, this);
-    this.#data[priority - 1] = data;
+    this.#data = data;
     await this.___asyncEmitSeries(false, 'aftercov', data, this);
-    return this.getActivePriority();
+  }
+
+  async setDataAtPriority(data: BACNetAppData<Tag, Type>, priority: number) {
+    const nextData = [...this.#data];
+    nextData[priority - 1] = data;
+    await this.___asyncEmitSeries(true, 'beforecov', nextData, this);
+    this.#data = nextData;
+    await this.___asyncEmitSeries(false, 'aftercov', this.#data, this);
   }
 
   /**
@@ -56,7 +65,7 @@ export class BDArrayProperty<
           data = data[0];
       }
     }
-    return this.setData(data, priority);
+    await this.setDataAtPriority(data, priority);
   }
   
   /**

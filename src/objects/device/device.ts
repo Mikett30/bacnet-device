@@ -1,16 +1,16 @@
 
 import {
   BDError,
-} from '../../errors.js';
+} from '../../errors.ts';
 
 import {
   BDObject,
-} from '../generic/object.js';
+} from '../generic/object.ts';
 
 import {
   type BACNetClientType,
   isDstInEffect,
-} from '../../utils.js';
+} from '../../utils.ts';
 
 import {
   BDAbstractProperty,
@@ -18,7 +18,7 @@ import {
   BDPolledArrayProperty,
   BDPolledSingletProperty,
   BDSingletProperty,
-} from '../../properties/index.js';
+} from '../../properties/index.ts';
 
 import bacnet, {
   type BACNetAppData,
@@ -53,27 +53,26 @@ import {
   type BDDeviceOpts,
   type BDDeviceEvents,
   type BDQueuedCov,
-} from './types.js';
+} from './types.ts';
 
 import {
   BDStructuredView,
-} from '../structuredview.js';
+} from '../structuredview.ts';
 
 import {
   sendConfirmedCovNotification,
   sendUnconfirmedCovNotification,
-} from './utils.js'
+} from './utils.ts'
 
-import { device as debug } from '../../debug.js';
+import { device as debug } from '../../debug.ts';
 
 import fastq from 'fastq';
-import { AsyncEventEmitter } from '../../events.js';
-import { SubscriptionStore } from './subscriptionstore.js';
-import { getObjectUID, getPropertyUID, type BDObjectUID } from '../../uids.js';
-import { BDNumericObject } from '../numeric/numeric.js';
+import { AsyncEventEmitter } from '../../events.ts';
+import { SubscriptionStore } from './subscriptionstore.ts';
+import { getObjectUID, getPropertyUID, type BDObjectUID } from '../../uids.ts';
+import { BDNumericObject } from '../numeric/numeric.ts';
 
-//const { default: BACnetClient } = bacnet;
-const BACnetClient = bacnet;
+const { default: BACnetClient } = bacnet;
 
 /**
  * Implements a BACnet Device object
@@ -230,10 +229,10 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
     // ====================== PROTOCOL-RELATED PROPERTIES =====================
 
     this.protocolVersion = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.PROTOCOL_VERSION, ApplicationTag.UNSIGNED_INTEGER, false, 1));
+      PropertyIdentifier.PROTOCOL_VERSION, ApplicationTag.UNSIGNED_INTEGER, 1));
 
     this.protocolRevision = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.PROTOCOL_REVISION, ApplicationTag.UNSIGNED_INTEGER, false, 24));
+      PropertyIdentifier.PROTOCOL_REVISION, ApplicationTag.UNSIGNED_INTEGER, 24));
 
     const supportedServicesBitString = new ServicesSupportedBitString(
       ServicesSupported.WHO_IS,
@@ -246,7 +245,7 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
     );
 
     this.protocolServicesSupported = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.PROTOCOL_SERVICES_SUPPORTED, ApplicationTag.BIT_STRING, false, supportedServicesBitString));
+      PropertyIdentifier.PROTOCOL_SERVICES_SUPPORTED, ApplicationTag.BIT_STRING, supportedServicesBitString));
 
     const supportedObjectTypesBitString = new ObjectTypesSupportedBitString(
       ObjectTypesSupported.DEVICE,
@@ -264,7 +263,7 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
     );
 
     this.protocolObjectTypesSupported = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.PROTOCOL_OBJECT_TYPES_SUPPORTED, ApplicationTag.BIT_STRING, false, supportedObjectTypesBitString));
+      PropertyIdentifier.PROTOCOL_OBJECT_TYPES_SUPPORTED, ApplicationTag.BIT_STRING, supportedObjectTypesBitString));
 
     // ==================== SUBSCRIPTION-RELATED PROPERTIES ===================
 
@@ -274,57 +273,57 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
     // ========================== METADATA PROPERTIES =========================
 
     this.vendorIdentifier = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.VENDOR_IDENTIFIER, ApplicationTag.UNSIGNED_INTEGER, false, this.#vendorId));
+      PropertyIdentifier.VENDOR_IDENTIFIER, ApplicationTag.UNSIGNED_INTEGER, this.#vendorId));
 
     this.vendorName = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.VENDOR_NAME, ApplicationTag.CHARACTER_STRING, false, opts.vendorName ?? '@bacnet-js'));
+      PropertyIdentifier.VENDOR_NAME, ApplicationTag.CHARACTER_STRING, opts.vendorName ?? '@bacnet-js'));
 
     this.modelName = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.MODEL_NAME, ApplicationTag.CHARACTER_STRING, false, opts.modelName ?? '@bacnet-js/device'));
+      PropertyIdentifier.MODEL_NAME, ApplicationTag.CHARACTER_STRING, opts.modelName ?? '@bacnet-js/device'));
 
     this.firmwareRevision = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.FIRMWARE_REVISION, ApplicationTag.CHARACTER_STRING, false, opts.firmwareRevision ?? '0.0.1'));
+      PropertyIdentifier.FIRMWARE_REVISION, ApplicationTag.CHARACTER_STRING, opts.firmwareRevision ?? '0.0.1'));
 
     this.applicationSoftwareVersion = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.APPLICATION_SOFTWARE_VERSION, ApplicationTag.CHARACTER_STRING, false, opts.applicationSoftwareVersion ?? '0.0.1'));
+      PropertyIdentifier.APPLICATION_SOFTWARE_VERSION, ApplicationTag.CHARACTER_STRING, opts.applicationSoftwareVersion ?? '0.0.1'));
 
     this.databaseRevision = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.DATABASE_REVISION, ApplicationTag.UNSIGNED_INTEGER, false, opts.databaseRevision ?? 1));
+      PropertyIdentifier.DATABASE_REVISION, ApplicationTag.UNSIGNED_INTEGER, opts.databaseRevision ?? 1));
 
     // Bindings can be discovered via the "Who-Is" and "I-Am" services.
     // This property represents a list of static bindings and we can leave it empty.
     this.deviceAddressBinding = this.addProperty(new BDArrayProperty<ApplicationTag.NULL>(
-      PropertyIdentifier.DEVICE_ADDRESS_BINDING, false, []));
+      PropertyIdentifier.DEVICE_ADDRESS_BINDING));
 
     // In your device constructor
     this.location = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.LOCATION, ApplicationTag.CHARACTER_STRING, false, opts.location ?? 'w'));
+      PropertyIdentifier.LOCATION, ApplicationTag.CHARACTER_STRING, opts.location ?? 'w'));
 
     this.serialNumber = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.SERIAL_NUMBER, ApplicationTag.CHARACTER_STRING, false, opts.serialNumber ?? 'w'));
+      PropertyIdentifier.SERIAL_NUMBER, ApplicationTag.CHARACTER_STRING, opts.serialNumber ?? 'w'));
 
     // ======================== APDU-RELATED PROPERTIES =======================
 
     this.maxApduLengthAccepted = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.MAX_APDU_LENGTH_ACCEPTED, ApplicationTag.UNSIGNED_INTEGER, false, opts.apduMaxLength ?? 1476));
+      PropertyIdentifier.MAX_APDU_LENGTH_ACCEPTED, ApplicationTag.UNSIGNED_INTEGER, opts.apduMaxLength ?? 1476));
 
     this.apduTimeout = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.APDU_TIMEOUT, ApplicationTag.UNSIGNED_INTEGER, false, opts.apduTimeout ?? 6000));
+      PropertyIdentifier.APDU_TIMEOUT, ApplicationTag.UNSIGNED_INTEGER, opts.apduTimeout ?? 6000));
 
     this.numberOfApduRetries = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.NUMBER_OF_APDU_RETRIES, ApplicationTag.UNSIGNED_INTEGER, false, opts.apduRetries ?? 3));
+      PropertyIdentifier.NUMBER_OF_APDU_RETRIES, ApplicationTag.UNSIGNED_INTEGER, opts.apduRetries ?? 3));
 
     this.apduSegmentTimeout = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.APDU_SEGMENT_TIMEOUT, ApplicationTag.UNSIGNED_INTEGER, false, opts.apduSegmentTimeout ?? 2000));
+      PropertyIdentifier.APDU_SEGMENT_TIMEOUT, ApplicationTag.UNSIGNED_INTEGER, opts.apduSegmentTimeout ?? 2000));
 
     // ======================== SEGMENTATION PROPERTIES =======================
 
     this.segmentationSupported = this.addProperty(new BDSingletProperty<ApplicationTag.ENUMERATED, Segmentation>(
-      PropertyIdentifier.SEGMENTATION_SUPPORTED, ApplicationTag.ENUMERATED, false, Segmentation.SEGMENTED_BOTH));
+      PropertyIdentifier.SEGMENTATION_SUPPORTED, ApplicationTag.ENUMERATED, Segmentation.SEGMENTED_BOTH));
 
     // Accepter values: 2, 4, 8, 16, 32, 64 and 0 for "unspecified"
     this.maxSegmentsAccepted = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.MAX_SEGMENTS_ACCEPTED, ApplicationTag.UNSIGNED_INTEGER, false, 16));
+      PropertyIdentifier.MAX_SEGMENTS_ACCEPTED, ApplicationTag.UNSIGNED_INTEGER, 16));
 
     // ======================== TIME-RELATED PROPERTIES =======================
 
@@ -343,7 +342,7 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
     // ======================= STATUS-RELATED PROPERTIES ======================
 
     this.systemStatus = this.addProperty(new BDSingletProperty<ApplicationTag.ENUMERATED, DeviceStatus>(
-      PropertyIdentifier.SYSTEM_STATUS, ApplicationTag.ENUMERATED, false, DeviceStatus.OPERATIONAL));
+      PropertyIdentifier.SYSTEM_STATUS, ApplicationTag.ENUMERATED, DeviceStatus.OPERATIONAL));
 
   }
 
@@ -722,9 +721,13 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
    * @private
    */
   #onBacnetWriteProperty = (req: WritePropertyContent) => {
+    //Add support for priority in payload, which isn't supported by bacnet-js/client definitions.
+    type WritePropContent = WritePropertyContent & { payload: { value?: { priority?: number } } };
+
     debug('req #%s: writeProperty');
     this.#wrapReqHandler(req, async () => {
-      const { header, service, invokeId, payload: { objectId, property, value } } = req;
+      const { header, service, invokeId, payload: { objectId, property, value } } = req as WritePropContent;
+
       const _value = value?.value;
       const _priority = value?.priority;
       const _property = value?.property ?? property;

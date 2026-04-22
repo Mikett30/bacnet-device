@@ -8,17 +8,17 @@ import {
 
 import { 
   AsyncEventEmitter,
-} from '../events.js';
+} from '../events.ts';
 
 import {
   type BDPropertyEvents,
   type BDPropertyType,
   type BDPropertyAccessContext,
-} from './types.js';
+} from './types.ts';
 
 import { 
   TaskQueue,
-} from '../taskqueue.js';
+} from '../taskqueue.ts';
 
 const defaultTaskQueue = new TaskQueue();
 
@@ -53,11 +53,15 @@ export abstract class BDAbstractProperty<
    */
   ___queue: TaskQueue;
   
-  constructor(type: BDPropertyType, identifier: PropertyIdentifier) {
+  #writable: boolean;
+  
+  constructor(type: BDPropertyType, identifier: PropertyIdentifier, writable?: boolean) {
     super();
     this.type = type;
     this.identifier = identifier;
     this.___queue = defaultTaskQueue;
+    this.#writable = writable ?? false;
+
   }
   
   /**
@@ -73,6 +77,12 @@ export abstract class BDAbstractProperty<
    * task that is executed via this property's task queue.
    */
   abstract setData(data: Data): Promise<void>;
+
+  /**
+   * Getter and setter for property writability.
+   */
+  get writable(): boolean { return this.#writable; }
+  set writable(value: boolean) { this.#writable = !!value; }
   
   /**
    * Network facing method used during handling of service requests that
@@ -90,6 +100,6 @@ export abstract class BDAbstractProperty<
    * 
    * @internal
    */
-  abstract ___writeData(value: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[]): Promise<void>;
+  abstract ___writeData(value: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[], priority?: number): Promise<void>;
   
 }

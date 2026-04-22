@@ -2,7 +2,7 @@
 import {
   type BDNumericValueOpts,
   BDNumericObject,
-} from './numeric.js';
+} from './numeric.ts';
 
 import {
   ApplicationTag,

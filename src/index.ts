@@ -9,17 +9,17 @@
  * @packageDocumentation
  */
 
-export { BDError } from './errors.js';
+export { BDError } from './errors.ts';
 
 export {
   type Task,
   TaskQueue,
-} from './taskqueue.js';
+} from './taskqueue.ts';
 
 export {
   type BDObjectUID,
   type BDPropertyUID,
-} from './uids.js';
+} from './uids.ts';
 
 export {
   type EventMap,
@@ -27,7 +27,7 @@ export {
   type EventArgs,
   type EventListener,
   AsyncEventEmitter,
-} from './events.js';
+} from './events.ts';
 
 export {
   type BDPropertyEvents,
@@ -38,36 +38,36 @@ export {
   BDPolledArrayProperty,
   BDSingletProperty,
   BDPolledSingletProperty,
-} from './properties/index.js';
+} from './properties/index.ts';
 
 export {
   type BDObjectEvents,
   BDObject,
-} from './objects/generic/object.js';
+} from './objects/generic/object.ts';
 
-export { BDDevice } from './objects/device/device.js';
+export { BDDevice } from './objects/device/device.ts';
 
 export {
   type BDDeviceOpts,
   type BDSubscription,
   type BDDeviceEvents,
-} from './objects/device/types.js';
+} from './objects/device/types.ts';
 
-export * from './objects/numeric/analogoutput.js';
-export * from './objects/numeric/analoginput.js';
-export * from './objects/numeric/analogvalue.js';
-export * from './objects/numeric/integervalue.js';
-export * from './objects/numeric/positiveintegervalue.js';
+export * from './objects/numeric/analogoutput.ts';
+export * from './objects/numeric/analoginput.ts';
+export * from './objects/numeric/analogvalue.ts';
+export * from './objects/numeric/integervalue.ts';
+export * from './objects/numeric/positiveintegervalue.ts';
 
-export * from './objects/binaryoutput.js';
-export * from './objects/binaryinput.js';
-export * from './objects/binaryvalue.js';
+export * from './objects/binaryoutput.ts';
+export * from './objects/binaryinput.ts';
+export * from './objects/binaryvalue.ts';
 
-export * from './objects/temporal/timevalue.js';
-export * from './objects/temporal/datevalue.js';
-export * from './objects/temporal/datetimevalue.js';
+export * from './objects/temporal/timevalue.ts';
+export * from './objects/temporal/datevalue.ts';
+export * from './objects/temporal/datetimevalue.ts';
 
-export * from './objects/multistatevalue.js';
+export * from './objects/multistatevalue.ts';
 
-export * from './objects/characterstringvalue.js';
-export * from './objects/structuredview.js';
+export * from './objects/characterstringvalue.ts';
+export * from './objects/structuredview.ts';

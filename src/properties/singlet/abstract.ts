@@ -6,8 +6,8 @@ import {
   ApplicationTag,
 } from '@bacnet-js/client';
 
-import { BDAbstractProperty } from '../abstract.js';
-import { BDPropertyType, type BDPropertyAccessContext } from '../types.js';
+import { BDAbstractProperty } from '../abstract.ts';
+import { BDPropertyType, type BDPropertyAccessContext } from '../types.ts';
 
 /**
  * Abstract base class for properties having a single item as their data.

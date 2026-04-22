@@ -8,9 +8,9 @@
  * @module
  */
 
-import { AsyncEventEmitter, type EventMap } from '../../events.js';
+import { AsyncEventEmitter, type EventMap } from '../../events.ts';
 
-import { BDError } from '../../errors.js';
+import { BDError } from '../../errors.ts';
 
 import {
   type BACNetAppData,
@@ -29,23 +29,24 @@ import {
 
 import type {
   ReadPropertyMultipleContent,
-} from '@bacnet-js/client/dist/lib/EventTypes.js';
+} from '@bacnet-js/client/dist/lib/EventTypes.ts';
 
 import {
   BDAbstractProperty,
   BDSingletProperty,
   BDPolledArrayProperty,
+  BDArrayProperty,
   type BDPropertyAccessContext,
   BDPolledSingletProperty,
-} from '../../properties/index.js';
+} from '../../properties/index.ts';
 
-import { ensureArray } from '../../utils.js';
+import { ensureArray } from '../../utils.ts';
 
-import { MAX_ARRAY_INDEX } from '../../constants.js';
+import { MAX_ARRAY_INDEX } from '../../constants.ts';
 
-import { TaskQueue, type Task } from '../../taskqueue.js';
+import { TaskQueue, type Task } from '../../taskqueue.ts';
 
-import type { BDDevice } from '../device/device.js';
+import type { BDDevice } from '../device/device.ts';
 
 /**
  * Events that can be emitted by a BACnet object
@@ -54,6 +55,8 @@ export interface BDObjectEvents extends EventMap {
   /** Emitted after a property value has changed */
   aftercov: [data: BACNetAppData | BACNetAppData[], property: BDAbstractProperty<any, any, any>, object: BDObject],
 }
+
+export type BDWritableProperties = Partial<Record<Extract<keyof typeof PropertyIdentifier, string>, boolean>>;
 
 /**
  * According to the BACnet specification, certain properties should not
@@ -97,8 +100,6 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
 
   readonly #queue: TaskQueue;
 
-
-
   readonly objectName: BDSingletProperty<ApplicationTag.CHARACTER_STRING>;
   readonly objectType: BDSingletProperty<ApplicationTag.ENUMERATED, ObjectType>;
   readonly objectIdentifier: BDPolledSingletProperty<ApplicationTag.OBJECTIDENTIFIER>;
@@ -113,12 +114,17 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
    * Creates a new BACnet object
    *
    */
-  constructor(type: ObjectType, { name, description, writable }: { name: string, description?: string, writable?: Partial<Record<PropertyIdentifier, boolean>> }) {
+  constructor(type: ObjectType, { name, description, writable }: { name: string, description?: string, writable?: boolean | BDWritableProperties }) {
     super();
 
     this.#queue = new TaskQueue();
     this.#properties = new Map();
     this.#propertyList = [];
+
+    // If writable is set to true, make all properties writable by default.
+    // Otherwise, use the provided writable object or default to all properties being read-only.
+    const log = type === ObjectType.MULTI_STATE_VALUE; // DEBUG
+    writable = typeof writable === "boolean" ? (writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : writable;
 
     this.objectName = this.addProperty(new BDSingletProperty(
       PropertyIdentifier.OBJECT_NAME, ApplicationTag.CHARACTER_STRING, name, writable?.OBJECT_NAME ?? false));
@@ -133,7 +139,7 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
       PropertyIdentifier.PROPERTY_LIST, () => this.#propertyList));
 
     this.description = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, description, writable?.DESCRIPTION ?? false));
+      PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, description ?? "", writable?.DESCRIPTION ?? false));
 
     this.outOfService = this.addProperty(new BDSingletProperty(
       PropertyIdentifier.OUT_OF_SERVICE, ApplicationTag.BOOLEAN, false, writable?.OUT_OF_SERVICE ?? false));
@@ -146,7 +152,6 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
 
     this.reliability = this.addProperty(new BDSingletProperty<ApplicationTag.ENUMERATED, Reliability>(
       PropertyIdentifier.RELIABILITY, ApplicationTag.ENUMERATED, Reliability.NO_FAULT_DETECTED));
-
   }
 
   get identifier(): BACNetAppData<ApplicationTag.OBJECTIDENTIFIER> {
@@ -206,18 +211,22 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
    * @throws BACnetError if the property does not exist
    * @internal
    */
-  async ___writeProperty(identifier: BACNetPropertyID, value: BACNetAppData | BACNetAppData[], priority: number): Promise<void> {
-
+  async ___writeProperty(identifier: BACNetPropertyID, value: BACNetAppData | BACNetAppData[], priority: number = 16): Promise<void> {
     const property = this.#properties.get(identifier.id as PropertyIdentifier);
+    
     // TODO: test/validate value before setting it!
     if (property) {
       if(!property.writable) { throw new BDError('property is not writable', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
 
       // Handle priority array logic for points that have a priority array when writing to the Present_Value.
-      if(PropertyIdentifier[identifier.id] === "PRESENT_VALUE" && this?.priorityArray) {
-          const highestPriority = await this.priorityArray.___writeData(value, priority);
-          this.currentCommandPriority.setValue(highestPriority);
-          value = this.priorityArray.getData(highestPriority);
+      if(PropertyIdentifier[identifier.id] === "PRESENT_VALUE" && "priorityArray" in this && "currentCommandPriority" in this) {
+          //Type assertions to access priority array and current command priority properties, which are only present on certain object types.
+          const priorityArray = this.priorityArray as BDArrayProperty<any>;
+          const currentCommandPriority = this.currentCommandPriority as BDSingletProperty<any, any>;
+          await priorityArray.___writeData(value, priority);
+          const highestPriority = priorityArray.getActivePriority();
+          currentCommandPriority.setValue(highestPriority);
+          value = priorityArray.getDataAtPriority(highestPriority);
       }
       await property.___writeData(value, priority);
     } else {

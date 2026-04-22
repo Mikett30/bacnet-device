@@ -2,12 +2,12 @@
 import {
   BDSingletProperty,
   BDArrayProperty,
-} from '../../properties/index.js';
+} from '../../properties/index.ts';
 
 import {
   type BDAnalogValueOpts,
   BDAnalogValue,
-  } from './analogvalue.js';
+  } from './analogvalue.ts';
 
 import {
   type BACNetAppData,

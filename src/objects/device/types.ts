@@ -2,11 +2,11 @@
 import {
   type BDObject,
   type BDObjectEvents,
-} from '../generic/object.js';
+} from '../generic/object.ts';
 
 import {
   type BDAbstractProperty,
-} from '../../properties/index.js';
+} from '../../properties/index.ts';
 
 import {
   type BACNetObjectID,
