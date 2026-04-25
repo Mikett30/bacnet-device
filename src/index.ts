@@ -54,21 +54,24 @@ export {
   type BDDeviceEvents,
 } from './objects/device/types.ts';
 
+export * from './objects/numeric/numeric.ts';
 export * from './objects/numeric/analogoutput.ts';
 export * from './objects/numeric/analoginput.ts';
 export * from './objects/numeric/analogvalue.ts';
 export * from './objects/numeric/integervalue.ts';
 export * from './objects/numeric/positiveintegervalue.ts';
 
+export * from './objects/binary/binary.ts';
 export * from './objects/binary/binaryoutput.ts';
 export * from './objects/binary/binaryinput.ts';
 export * from './objects/binary/binaryvalue.ts';
 
+export * from './objects/multistate/multistate.ts';
+export * from './objects/multistate/multistatevalue.ts';
+
 export * from './objects/temporal/timevalue.ts';
 export * from './objects/temporal/datevalue.ts';
 export * from './objects/temporal/datetimevalue.ts';
-
-export * from './objects/multistatevalue.ts';
 
 export * from './objects/characterstringvalue.ts';
 export * from './objects/structuredview.ts';

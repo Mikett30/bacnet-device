@@ -1,7 +1,7 @@
 
 import { BDSingletProperty, BDArrayProperty } from '../../properties/index.ts';
 import { BDObject, type BDWritableProperties } from '../generic/object.ts';
-import { PresentValue } from '../../properties/presentvalue.ts';
+import { PresentValue, type PresentValueOpts } from '../../properties/presentvalue.ts';
 
 import {
   ObjectType,
@@ -16,8 +16,9 @@ export interface BDNumericObjectOpts<Type = number> {
   units?: EngineeringUnits,
   writable?: boolean | BDWritableProperties | undefined,
   description?: string | undefined,
+  relinquishDefault?: Type | undefined,
   presentValue?: Type | undefined,
-  covIncrement?: number | undefined,
+  covIncrement?: Type | undefined,
   minPresentValue?: Type | undefined,
   maxPresentValue?: Type | undefined,
 }
@@ -47,25 +48,22 @@ export class BDNumericObject<
 
     opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
 
-    //Analog Inputs don't have a priority array.
-    const givePriorityArray = type !== ObjectType.ANALOG_INPUT;
-
     //Create a present value properties that is tied to other properties.
-    const presentValue = new PresentValue<Tag, Type>(tag, opts.presentValue ?? 0 as Type, givePriorityArray, opts.writable);
+    const presentValue = new PresentValue<Tag, Type>(tag, opts.presentValue ?? opts.relinquishDefault ?? 0 as Type, this, opts as PresentValueOpts<Type>);
 
     //All numeric objects have these properties.
     this.presentValue = this.addProperty(presentValue);
-    this.covIncrement = this.addProperty(presentValue.covIncrement!);
-    this.outOfService = this.addProperty(presentValue.outOfService);
+    this.outOfService = this.addProperty(new BDSingletProperty<ApplicationTag.BOOLEAN>(PropertyIdentifier.OUT_OF_SERVICE, ApplicationTag.BOOLEAN, false, opts.writable?.OUT_OF_SERVICE ?? false));
+    this.covIncrement = this.addProperty(new BDSingletProperty<Tag, Type>(PropertyIdentifier.COV_INCREMENT, tag, opts.covIncrement ?? 0 as Type, opts.writable?.COV_INCREMENT ?? false));
     this.engineeringUnit = this.addProperty(new BDSingletProperty(PropertyIdentifier.UNITS, ApplicationTag.ENUMERATED, opts?.units ?? 95, opts?.writable?.UNITS ?? false));
     this.maxPresentValue = this.addProperty(new BDSingletProperty(PropertyIdentifier.MAX_PRES_VALUE, tag, Math.min(opts?.maxPresentValue ?? Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER) as Type, opts?.writable?.MAX_PRES_VALUE ?? false));
     this.minPresentValue = this.addProperty(new BDSingletProperty(PropertyIdentifier.MIN_PRES_VALUE, tag, Math.max(opts?.minPresentValue ?? Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER) as Type, opts?.writable?.MIN_PRES_VALUE ?? false));
 
     //Analog inputs don't have these properties.
-    if(givePriorityArray) {
-      this.relinquishDefault = this.addProperty(presentValue.relinquishDefault!);
-      this.priorityArray = this.addProperty(presentValue.priorityArray!);
-      this.currentCommandPriority = this.addProperty(presentValue.currentCommandPriority!);
+    if(type !== ObjectType.ANALOG_INPUT) {
+      this.relinquishDefault = this.addProperty(new BDSingletProperty<Tag, Type>(PropertyIdentifier.RELINQUISH_DEFAULT, tag, opts.relinquishDefault ?? 0 as Type, opts.writable?.RELINQUISH_DEFAULT));
+      this.currentCommandPriority = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>(PropertyIdentifier.CURRENT_COMMAND_PRIORITY, ApplicationTag.UNSIGNED_INTEGER, 0, false));
+      this.priorityArray = this.addProperty(new BDArrayProperty(PropertyIdentifier.PRIORITY_ARRAY));
     }
   }
 }
