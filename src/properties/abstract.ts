@@ -100,6 +100,6 @@ export abstract class BDAbstractProperty<
    * 
    * @internal
    */
-  abstract ___writeData(value: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[], priority?: number): Promise<void>;
+  abstract ___writeData(value: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[], force?: boolean, priority?: number): Promise<void>;
   
 }

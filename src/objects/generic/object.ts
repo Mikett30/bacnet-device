@@ -218,7 +218,7 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
     if(!property) { throw new BDError('unknown property', ErrorCode.UNKNOWN_PROPERTY, ErrorClass.PROPERTY); }
 
     //Otherwise, just write the value directly to the property.
-    await property.___writeData(value, priority);
+    await property.___writeData(value, false, priority);
   }
 
   /**

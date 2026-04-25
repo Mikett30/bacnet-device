@@ -52,7 +52,7 @@ export class BDArrayProperty<
    *
    * @internal
    */
-  async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[], priority: number) {
+  async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[], force: boolean = false, priority: number = 16) {
     if (!Number.isInteger(priority) || priority < 1 || priority > this.#data.length) {
       throw new BDError('invalid priority', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY);
     }

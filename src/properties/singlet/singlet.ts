@@ -56,8 +56,8 @@ export class BDSingletProperty<
    *
    * @internal
    */
-  async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[]) {
-    if(!this.writable) { throw new BDError('property is not writable', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
+  async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[], force: boolean = false): Promise<void> {
+    if(!force && !this.writable) { throw new BDError('property is not writable', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
 
     if (Array.isArray(data)) {
       if (data.length !== 1) {

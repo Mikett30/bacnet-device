@@ -63,9 +63,9 @@ export class PresentValue<
      *
      * @internal
      */
-    override async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[], priority: number = 16) {
+    override async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[], force: boolean = false, priority: number = 16) {
         //Reject immediately if property is not writable.
-        if(!this.writable) { throw new BDError('property is not writable', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
+        if(!force && !this.writable) { throw new BDError('property is not writable', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
 
         //Reject immediately if data is an array (since present value is a singlet property).
         if(Array.isArray(data)) {
@@ -91,7 +91,7 @@ export class PresentValue<
         //If priority array exists, write to the priority array, then check active array priority.
         //Write new priority to current command priority, and update present value with highest priority value.
         if(!outOfService && this.#parent.priorityArray && this.#parent.relinquishDefault) {
-            this.#parent.priorityArray.___writeData(data as any, priority);
+            this.#parent.priorityArray.___writeData(data as any, false, priority);
             const activePriority = this.#parent.priorityArray.getActivePriority();
             this.#parent.currentCommandPriority?.setValue(activePriority);
             return this.setData(activePriority ? this.#parent.priorityArray.getDataAtPriority(activePriority) : this.#parent.relinquishDefault.getData());

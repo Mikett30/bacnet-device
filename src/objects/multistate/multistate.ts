@@ -41,7 +41,7 @@ export class BDMultistateObject<
     const presentValue = new PresentValue<Tag, Type>(tag, opts.presentValue ?? opts.relinquishDefault ?? 1 as Type, this, opts as PresentValueOpts<Type>);
 
     //All multistate objects have these properties.
-    this.presentValue = this.addProperty(presentValue);
+    this.presentValue = this.addProperty(presentValue) as PresentValue<Tag, Type>;
     this.outOfService = this.addProperty(new BDSingletProperty<ApplicationTag.BOOLEAN>(PropertyIdentifier.OUT_OF_SERVICE, ApplicationTag.BOOLEAN, false, opts.writable?.OUT_OF_SERVICE ?? false));
     this.numberOfStates = this.addProperty(new BDPolledSingletProperty<ApplicationTag.UNSIGNED_INTEGER>(PropertyIdentifier.NUMBER_OF_STATES, ApplicationTag.UNSIGNED_INTEGER, () => opts?.states?.length ?? 2));
 
