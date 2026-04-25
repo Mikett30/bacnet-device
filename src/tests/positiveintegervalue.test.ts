@@ -17,7 +17,7 @@ describe('PositiveIntegerValue', () => {
     device.addObject(new BDPositiveIntegerValue({
       name: 'Test PIV',
       description: 'A test positive integer value',
-      unit: EngineeringUnits.NO_UNITS,
+      units: EngineeringUnits.NO_UNITS,
       presentValue: 99,
       covIncrement: 10,
       minPresentValue: 0,
@@ -107,7 +107,7 @@ describe('PositiveIntegerValue (writable)', () => {
     device.on('error', console.error);
     device.addObject(new BDPositiveIntegerValue({
       name: 'Writable PIV',
-      unit: EngineeringUnits.NO_UNITS,
+      units: EngineeringUnits.NO_UNITS,
       presentValue: 0,
       writable: true,
     }));
@@ -149,12 +149,12 @@ describe('PositiveIntegerValue (multiple objects)', () => {
     device.on('error', console.error);
     device.addObject(new BDPositiveIntegerValue({
       name: 'First PIV',
-      unit: EngineeringUnits.NO_UNITS,
+      units: EngineeringUnits.NO_UNITS,
       presentValue: 10,
     }));
     device.addObject(new BDPositiveIntegerValue({
       name: 'Second PIV',
-      unit: EngineeringUnits.NO_UNITS,
+      units: EngineeringUnits.NO_UNITS,
       presentValue: 200,
     }));
   });

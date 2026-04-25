@@ -105,7 +105,7 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
   readonly objectIdentifier: BDPolledSingletProperty<ApplicationTag.OBJECTIDENTIFIER>;
   readonly propertyList: BDPolledArrayProperty<ApplicationTag.ENUMERATED, PropertyIdentifier>;
   readonly description: BDSingletProperty<ApplicationTag.CHARACTER_STRING>;
-  readonly outOfService: BDSingletProperty<ApplicationTag.BOOLEAN>;
+  //readonly outOfService: BDSingletProperty<ApplicationTag.BOOLEAN>;
   readonly statusFlags: BDSingletProperty<ApplicationTag.BIT_STRING>;
   readonly eventState: BDSingletProperty<ApplicationTag.ENUMERATED, EventState>;
   readonly reliability: BDSingletProperty<ApplicationTag.ENUMERATED, Reliability>;
@@ -114,7 +114,7 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
    * Creates a new BACnet object
    *
    */
-  constructor(type: ObjectType, { name, description, writable }: { name: string, description?: string, writable?: boolean | BDWritableProperties }) {
+  constructor(type: ObjectType, opts: any) {
     super();
 
     this.#queue = new TaskQueue();
@@ -123,10 +123,10 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
 
     // If writable is set to true, make all properties writable by default.
     // Otherwise, use the provided writable object or default to all properties being read-only.
-    writable = typeof writable === "boolean" ? (writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : writable;
+    opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
 
     this.objectName = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.OBJECT_NAME, ApplicationTag.CHARACTER_STRING, name, writable?.OBJECT_NAME ?? false));
+      PropertyIdentifier.OBJECT_NAME, ApplicationTag.CHARACTER_STRING, opts.name, opts.writable?.OBJECT_NAME ?? false));
 
     this.objectType = this.addProperty(new BDSingletProperty(
       PropertyIdentifier.OBJECT_TYPE, ApplicationTag.ENUMERATED, type));
@@ -138,10 +138,10 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
       PropertyIdentifier.PROPERTY_LIST, () => this.#propertyList));
 
     this.description = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, description ?? "", writable?.DESCRIPTION ?? false));
+      PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, opts?.description ?? "", opts?.writable?.DESCRIPTION ?? false));
 
-    this.outOfService = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.OUT_OF_SERVICE, ApplicationTag.BOOLEAN, false, writable?.OUT_OF_SERVICE ?? false));
+    //this.outOfService = this.addProperty(new BDSingletProperty(
+    //  PropertyIdentifier.OUT_OF_SERVICE, ApplicationTag.BOOLEAN, opts?.outOfService ?? false, opts?.writable?.OUT_OF_SERVICE ?? false));
 
     this.statusFlags = this.addProperty(new BDSingletProperty<ApplicationTag.BIT_STRING, StatusFlagsBitString>(
       PropertyIdentifier.STATUS_FLAGS, ApplicationTag.BIT_STRING, new StatusFlagsBitString()));
@@ -213,62 +213,9 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
   async ___writeProperty(identifier: BACNetPropertyID, value: BACNetAppData | BACNetAppData[], priority: number = 16): Promise<void> {
     //Inputs are only writable when Out_Of_Service is true.
     const property = this.#properties.get(identifier.id as PropertyIdentifier);
-    const newValue = Array.isArray(value) ? value[0]?.value ?? null : value;
 
+    //Reject writes if unknown property.
     if(!property) { throw new BDError('unknown property', ErrorCode.UNKNOWN_PROPERTY, ErrorClass.PROPERTY); }
-
-    const outOfService = this.outOfService.getValue();
-    const relinquishDefault = "relinquishDefault" in this ? (this as any).relinquishDefault.getValue() : null;
-    const hasPriorityArray = "priorityArray" in this && "currentCommandPriority" in this;
-    const isPresentValueWrite = PropertyIdentifier[identifier.id] === "PRESENT_VALUE";
-    const isOutOfServiceWrite = PropertyIdentifier[identifier.id] === "OUT_OF_SERVICE";
-    const isRelinquishDefaultWrite = PropertyIdentifier[identifier.id] === "RELINQUISH_DEFAULT";
-
-    //Reject writes if writable is disabled.
-    if(!property.writable) { throw new BDError('property is not writable', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
-
-    //Inputs are only writable when Out_Of_Service is true.
-    if(isPresentValueWrite && !outOfService && [ObjectType.ANALOG_INPUT, ObjectType.BINARY_INPUT].includes(this.objectType.getValue() as ObjectType)) {
-      throw new BDError('point is not out of service', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY);
-    }
-
-    //If point has a priority array, the write must go through the array first, then re-evaluate based on highest priority.
-    if(isPresentValueWrite && hasPriorityArray && !outOfService) {
-      //Get properties.
-      const priorityArray = this.priorityArray as BDArrayProperty<any>;
-      const currentCommandPriority = this.currentCommandPriority as BDSingletProperty<any, any>;
-
-      //Write to array, and update current command priority and present value based on result.
-      await priorityArray.___writeData(value, priority);
-      await currentCommandPriority.setValue(priorityArray.getActivePriority());
-      await property.___writeData(priorityArray.getDataAtPriority(priorityArray.getActivePriority()));
-      return;
-    }
-
-    //When going from Out_Of_Service to In_Service, update present value.
-    if(isOutOfServiceWrite && outOfService && !newValue && hasPriorityArray) {
-      const priorityArray = this.priorityArray as BDArrayProperty<any>;
-      const presentValue = (this as any).presentValue;
-
-      await property.___writeData(value, priority);
-
-      if(priorityArray.getActivePriority() > 0) {
-        await presentValue.setValue(priorityArray.getDataAtPriority(priorityArray.getActivePriority()).value);
-      } else {
-        await presentValue.setValue(relinquishDefault);
-      }
-
-      return;
-    }
-
-    //When updating the relinquish default value, if there is a priority array and no active priorities, update the present value as well.
-    if(isRelinquishDefaultWrite && !outOfService && hasPriorityArray) {
-      await property.___writeData(value, priority);
-      const relinquishDefault = (this as any).relinquishDefault.getValue();
-      const currentCommandPriority = (this as any).currentCommandPriority.getValue();
-      if(currentCommandPriority === 0) { await (this as any).presentValue.setValue(relinquishDefault); }
-      return;
-    }
 
     //Otherwise, just write the value directly to the property.
     await property.___writeData(value, priority);

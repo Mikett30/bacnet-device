@@ -17,7 +17,7 @@ describe('AnalogOutput', () => {
     device.addObject(new BDAnalogOutput({
       name: 'Test AO',
       description: 'A test analog output',
-      unit: EngineeringUnits.PERCENT,
+      units: EngineeringUnits.PERCENT,
       presentValue: 75,
       covIncrement: 2,
       minPresentValue: 0,
@@ -117,7 +117,7 @@ describe('AnalogOutput (writable)', () => {
     device.on('error', console.error);
     device.addObject(new BDAnalogOutput({
       name: 'Writable AO',
-      unit: EngineeringUnits.PERCENT,
+      units: EngineeringUnits.PERCENT,
       presentValue: 0,
       writable: true,
     }));
@@ -153,12 +153,12 @@ describe('AnalogOutput (multiple objects)', () => {
     device.on('error', console.error);
     device.addObject(new BDAnalogOutput({
       name: 'Valve Output',
-      unit: EngineeringUnits.PERCENT,
+      units: EngineeringUnits.PERCENT,
       presentValue: 50,
     }));
     device.addObject(new BDAnalogOutput({
       name: 'Damper Output',
-      unit: EngineeringUnits.PERCENT,
+      units: EngineeringUnits.PERCENT,
       presentValue: 75,
     }));
   });

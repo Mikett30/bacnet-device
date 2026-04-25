@@ -42,6 +42,7 @@ export {
 
 export {
   type BDObjectEvents,
+  type BDWritableProperties,
   BDObject,
 } from './objects/generic/object.ts';
 
@@ -59,9 +60,9 @@ export * from './objects/numeric/analogvalue.ts';
 export * from './objects/numeric/integervalue.ts';
 export * from './objects/numeric/positiveintegervalue.ts';
 
-export * from './objects/binaryoutput.ts';
-export * from './objects/binaryinput.ts';
-export * from './objects/binaryvalue.ts';
+export * from './objects/binary/binaryoutput.ts';
+export * from './objects/binary/binaryinput.ts';
+export * from './objects/binary/binaryvalue.ts';
 
 export * from './objects/temporal/timevalue.ts';
 export * from './objects/temporal/datevalue.ts';

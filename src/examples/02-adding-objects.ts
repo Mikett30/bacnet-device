@@ -13,5 +13,5 @@ const device = new BDDevice(1, {
 
 const analogValueObj = device.addObject(new BDAnalogValue({
   name: 'Zone Temperature',
-  unit: EngineeringUnits.DEGREES_CELSIUS,
+  units: EngineeringUnits.DEGREES_CELSIUS,
 }));

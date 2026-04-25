@@ -17,7 +17,7 @@ describe('AnalogInput', () => {
     device.addObject(new BDAnalogInput({
       name: 'Test AI',
       description: 'A test analog input',
-      unit: EngineeringUnits.DEGREES_CELSIUS,
+      units: EngineeringUnits.DEGREES_CELSIUS,
       presentValue: 23.1,
       covIncrement: 0.5,
       minPresentValue: -40,
@@ -107,12 +107,12 @@ describe('AnalogInput (multiple objects)', () => {
     device.on('error', console.error);
     device.addObject(new BDAnalogInput({
       name: 'Temperature Sensor',
-      unit: EngineeringUnits.DEGREES_CELSIUS,
+      units: EngineeringUnits.DEGREES_CELSIUS,
       presentValue: 22.5,
     }));
     device.addObject(new BDAnalogInput({
       name: 'Pressure Sensor',
-      unit: EngineeringUnits.PASCALS,
+      units: EngineeringUnits.PASCALS,
       presentValue: 101325,
     }));
   });

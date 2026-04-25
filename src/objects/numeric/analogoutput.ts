@@ -1,31 +1,9 @@
-
 import {
-  BDSingletProperty,
-  BDArrayProperty,
-} from '../../properties/index.ts';
-
-import {
-  type BACNetAppData,
   ObjectType,
   ApplicationTag,
-  PropertyIdentifier,
-  EngineeringUnits,
 } from '@bacnet-js/client';
 
-import { BDNumericObject, type BDNumericValueOpts } from './numeric.ts';
-import type { BDWritableProperties } from '../generic/object.ts';
-
-export interface BDAnalogOutputOpts {
-  name: string,
-  writable?: boolean | BDWritableProperties | undefined,
-  description?: string | undefined,
-  presentValue?: number | undefined,
-  relinquishDefault?: number | undefined,
-  minPresentValue?: number | undefined,
-  maxPresentValue?: number | undefined,
-  covIncrement?: number | undefined,
-  units?: EngineeringUnits | undefined,
-}
+import { BDNumericObject, type BDNumericObjectOpts } from './numeric.ts';
 
 /**
  * Implements a BACnet Analog Output object
@@ -48,7 +26,7 @@ export interface BDAnalogOutputOpts {
  *
  * @extends BDObject
  */
-export class BDAnalogOutput extends BDNumericObject<ApplicationTag.REAL> {
+export class BDAnalogOutput extends BDNumericObject<ApplicationTag.REAL | ApplicationTag.NULL> {
 
   /**
    * The default value for the present value when all priority array slots are NULL
@@ -56,7 +34,7 @@ export class BDAnalogOutput extends BDNumericObject<ApplicationTag.REAL> {
    * This property represents the value to be used for the Present_Value property
    * when all entries in the Priority_Array property are NULL.
    */
-  readonly relinquishDefault: BDSingletProperty<ApplicationTag.REAL>;
+  //readonly relinquishDefault: BDSingletProperty<ApplicationTag.REAL>;
 
   /**
    * The priority array for command arbitration
@@ -65,7 +43,7 @@ export class BDAnalogOutput extends BDNumericObject<ApplicationTag.REAL> {
    * BACnet devices use this mechanism to determine which command source has control
    * over the output value at any given time.
    */
-  readonly priorityArray: BDArrayProperty<ApplicationTag.REAL | ApplicationTag.NULL>;
+  //readonly priorityArray: BDArrayProperty<ApplicationTag.REAL | ApplicationTag.NULL>;
 
   /**
    * The current command priority that is controlling the Present_Value
@@ -74,18 +52,12 @@ export class BDAnalogOutput extends BDNumericObject<ApplicationTag.REAL> {
    * has control of the Present_Value property, or NULL if the Relinquish_Default
    * is being used.
    */
-  readonly currentCommandPriority: BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>;
+  //readonly currentCommandPriority: BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>;
 
   /**
    * Creates a new BACnet Analog Output object
    */
-  constructor(opts: BDAnalogOutputOpts) {    
-        opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
-    
-        super(ObjectType.ANALOG_OUTPUT, ApplicationTag.REAL, opts as BDNumericValueOpts);
-    
-        this.relinquishDefault = this.addProperty(new BDSingletProperty<ApplicationTag.REAL>(PropertyIdentifier.RELINQUISH_DEFAULT, ApplicationTag.REAL, opts.relinquishDefault ?? 0, opts.writable?.RELINQUISH_DEFAULT ?? false));
-        this.currentCommandPriority = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>(PropertyIdentifier.CURRENT_COMMAND_PRIORITY, ApplicationTag.UNSIGNED_INTEGER, 0, false));
-        this.priorityArray = this.addProperty(new BDArrayProperty(PropertyIdentifier.PRIORITY_ARRAY));
+  constructor(opts: BDNumericObjectOpts) {    
+    super(ObjectType.ANALOG_OUTPUT, ApplicationTag.REAL | ApplicationTag.NULL, opts);
   }
 }

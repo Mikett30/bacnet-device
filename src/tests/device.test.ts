@@ -3,7 +3,7 @@ import { deepStrictEqual } from 'node:assert';
 import { BDDevice } from '../objects/device/device.js';
 import { bsReadProperty } from './bacnet-stack-client.js';
 import { BDAnalogValue } from '../objects/numeric/analogvalue.js';
-import { BDBinaryValue } from '../objects/binaryvalue.js';
+import { BDBinaryValue } from '../objects/binary/binaryvalue.ts';
 import { BDCharacterStringValue } from '../objects/characterstringvalue.js';
 import { EngineeringUnits, ObjectType, PropertyIdentifier } from '@bacnet-js/client';
 
@@ -242,7 +242,7 @@ describe('Device (with child objects)', () => {
     device.on('error', console.error);
     device.addObject(new BDAnalogValue({
       name: 'AV1',
-      unit: EngineeringUnits.DEGREES_CELSIUS,
+      units: EngineeringUnits.DEGREES_CELSIUS,
       presentValue: 22.5,
     }));
     device.addObject(new BDBinaryValue({

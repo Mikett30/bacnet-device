@@ -40,13 +40,13 @@ export class BDStructuredView extends BDObject {
 
   constructor(opts: BDStructuredViewOpts) {
 
-    super(ObjectType.STRUCTURED_VIEW, opts.name, opts.description);
+    super(ObjectType.STRUCTURED_VIEW, opts);
 
     this.#subordinates = new Set();
     this.#subortinateData = [];
 
     this.nodeType = this.addProperty(new BDSingletProperty<ApplicationTag.ENUMERATED, NodeType>(
-      PropertyIdentifier.NODE_TYPE, ApplicationTag.ENUMERATED, false, opts.nodeType ?? NodeType.UNKNOWN));
+      PropertyIdentifier.NODE_TYPE, ApplicationTag.ENUMERATED, opts.nodeType ?? NodeType.UNKNOWN));
 
     this.subordinateList = this.addProperty(new BDPolledArrayProperty<ApplicationTag.OBJECTIDENTIFIER>(
       PropertyIdentifier.SUBORDINATE_LIST, () => this.#subortinateData));

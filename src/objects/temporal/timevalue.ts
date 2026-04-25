@@ -19,10 +19,10 @@ export class BDTimeValue extends BDObject {
   readonly presentValue: BDSingletProperty<ApplicationTag.TIME>;
 
   constructor(opts: BDTimeValueOpts) {
-    super(ObjectType.TIME_VALUE, opts.name, opts.description);
+    super(ObjectType.TIME_VALUE, opts);
 
     this.presentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.PRESENT_VALUE, ApplicationTag.TIME, opts.writable ?? false, opts.presentValue ?? new Date()));
-
+      PropertyIdentifier.PRESENT_VALUE, ApplicationTag.TIME, opts.presentValue ?? new Date(), opts.writable ?? false));
+      
   }
 }
