@@ -1,14 +1,13 @@
 import { 
-  type ApplicationTagValueTypeMap,
-  type BACNetAppData,
-  PropertyIdentifier,
-  ErrorCode,
-  ErrorClass,
-  ApplicationTag,
+    type ApplicationTagValueTypeMap,
+    type BACNetAppData,
+    PropertyIdentifier,
+    ErrorCode,
+    ErrorClass,
+    ApplicationTag,
 } from "@bacnet-js/client";
 
 import {
-    BDArrayProperty, 
     BDSingletProperty, 
     type BDWritableProperties 
 } from "../index.ts";
@@ -40,6 +39,10 @@ export class PresentValue<
 
         //Store reference to parent object to allow present value to access other properties.
         this.#parent = parent;
+    }
+
+    override async setValue(value: Type, priority: number = 16): Promise<void> {
+        await this.___writeData({ ...this.getData(), value }, true, priority);
     }
 
     /**

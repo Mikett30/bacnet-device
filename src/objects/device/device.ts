@@ -347,7 +347,7 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
   }
 
   /*** THIS FUNCTION WAS ADDED FOR THE API ***/
-  getObjects(): Array<any> { return [...this.#objects.values()]; }
+  getObjects(): Array<BDObject> { return [...this.#objects.values()]; }
 
   // ==========================================================================
   //                               PUBLIC METHODS
@@ -474,6 +474,7 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
    */
   #covQueueWorker = async (cov: BDQueuedCov<any, any, any>) => {
     const propertyUid = getPropertyUID(cov.object.identifier.value, cov.property.identifier);
+
     for (const subscription of this.#subscriptions.getPropertySubscriptions(propertyUid)) {
       if (cov.property.identifier === PropertyIdentifier.PRESENT_VALUE
         && cov.property === subscription.property
@@ -483,7 +484,9 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
       ) {
         continue;
       }
+
       subscription.lastDataSent = cov.data;
+      
       if (subscription.issueConfirmedNotifications) {
         await sendConfirmedCovNotification(this.#client, this, subscription, cov);
         subscription.covIncrement += 1;

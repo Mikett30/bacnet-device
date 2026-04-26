@@ -13,7 +13,8 @@
     "clean": "rm -rf ./dist",
     "build": "npm run clean && tsc -p .",
     "hooks": "cog install-hook --all",
-    "test": "echo \"see TESTING.md\""
+    "test": "echo \"see TESTING.md\"",
+    "launch": "npm run build && npm run start"
   },
   "author": "Jacopo Scazzosi <jacopo@scazzosi.com>",
   "license": "MIT",

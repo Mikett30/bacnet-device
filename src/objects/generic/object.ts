@@ -14,7 +14,6 @@ import { BDError } from '../../errors.ts';
 
 import {
   type BACNetAppData,
-  type BACNetObjectID,
   type BACNetPropertyID,
   type BACNetReadAccess,
   ErrorCode,
@@ -35,17 +34,13 @@ import {
   BDAbstractProperty,
   BDSingletProperty,
   BDPolledArrayProperty,
-  BDArrayProperty,
   type BDPropertyAccessContext,
   BDPolledSingletProperty,
 } from '../../properties/index.ts';
 
 import { ensureArray } from '../../utils.ts';
-
 import { MAX_ARRAY_INDEX } from '../../constants.ts';
-
 import { TaskQueue, type Task } from '../../taskqueue.ts';
-
 import type { BDDevice } from '../device/device.ts';
 
 /**
@@ -105,7 +100,6 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
   readonly objectIdentifier: BDPolledSingletProperty<ApplicationTag.OBJECTIDENTIFIER>;
   readonly propertyList: BDPolledArrayProperty<ApplicationTag.ENUMERATED, PropertyIdentifier>;
   readonly description: BDSingletProperty<ApplicationTag.CHARACTER_STRING>;
-  //readonly outOfService: BDSingletProperty<ApplicationTag.BOOLEAN>;
   readonly statusFlags: BDSingletProperty<ApplicationTag.BIT_STRING>;
   readonly eventState: BDSingletProperty<ApplicationTag.ENUMERATED, EventState>;
   readonly reliability: BDSingletProperty<ApplicationTag.ENUMERATED, Reliability>;
@@ -139,9 +133,6 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
 
     this.description = this.addProperty(new BDSingletProperty(
       PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, opts?.description ?? "", opts?.writable?.DESCRIPTION ?? false));
-
-    //this.outOfService = this.addProperty(new BDSingletProperty(
-    //  PropertyIdentifier.OUT_OF_SERVICE, ApplicationTag.BOOLEAN, opts?.outOfService ?? false, opts?.writable?.OUT_OF_SERVICE ?? false));
 
     this.statusFlags = this.addProperty(new BDSingletProperty<ApplicationTag.BIT_STRING, StatusFlagsBitString>(
       PropertyIdentifier.STATUS_FLAGS, ApplicationTag.BIT_STRING, new StatusFlagsBitString()));
