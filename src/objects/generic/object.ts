@@ -326,6 +326,12 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
    * @private
    */
   #onPropertyAfterCov = async (value: BACNetAppData | BACNetAppData[], property: BDAbstractProperty<any, any, any>) => {
+    // Point-like objects (those with PRESENT_VALUE) only propagate object-level
+    // aftercov when PRESENT_VALUE changes.
+    if (this.#properties.has(PropertyIdentifier.PRESENT_VALUE) && property.identifier !== PropertyIdentifier.PRESENT_VALUE) {
+      return;
+    }
+
     await this.___asyncEmitSeries(false, 'aftercov', value, property, this);
   };
 

@@ -7,6 +7,7 @@ import {
   ApplicationTag,
   PropertyIdentifier,
 } from '@bacnet-js/client';
+import { isDeepStrictEqual } from 'node:util';
 
 import { BDError } from '../../errors.ts';
 import { type BDPropertyAccessContext } from './../types.ts';
@@ -35,6 +36,11 @@ export class BDArrayProperty<
   }
 
   async setData(data: BACNetAppData<Tag, Type>[]) {
+    if (isDeepStrictEqual(this.#data, data)) {
+      this.#data = data;
+      return;
+    }
+
     await this.___asyncEmitSeries(true, 'beforecov', data, this);
     this.#data = data;
     await this.___asyncEmitSeries(false, 'aftercov', data, this);
@@ -47,6 +53,11 @@ export class BDArrayProperty<
 
     const nextData = [...this.#data];
     nextData[priority - 1] = data;
+
+    if (isDeepStrictEqual(this.#data, nextData)) {
+      return;
+    }
+
     await this.___asyncEmitSeries(true, 'beforecov', nextData, this);
     this.#data = nextData;
     await this.___asyncEmitSeries(false, 'aftercov', this.#data, this);

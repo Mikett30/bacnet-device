@@ -8,6 +8,7 @@ import {
   ErrorClass,
   ApplicationTag,
 } from '@bacnet-js/client';
+import { isDeepStrictEqual } from 'node:util';
 
 import { BDError } from '../../errors.ts';
 import { BDAbstractSingletProperty } from './abstract.ts';
@@ -35,6 +36,11 @@ export class BDSingletProperty<
   }
 
   async setData(data: BACNetAppData<Tag, Type>) {
+    if (isDeepStrictEqual(this.#data.value, data.value)) {
+      this.#data = data;
+      return;
+    }
+
     await this.___asyncEmitSeries(true, 'beforecov', data, this);
     this.#data = data;
     await this.___asyncEmitSeries(false, 'aftercov', data, this);

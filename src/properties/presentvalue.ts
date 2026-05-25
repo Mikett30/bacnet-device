@@ -7,10 +7,14 @@ import {
     ApplicationTag,
     BinaryPV,
 } from "@bacnet-js/client";
+import { isDeepStrictEqual } from "node:util";
 
 import {
     BDSingletProperty, 
-    type BDWritableProperties 
+    type BDWritableProperties,
+    type BDPropertyEvents,
+    type EventKey,
+    type EventListener,
 } from "../index.ts";
 
 import { BDError } from '../errors.ts';
@@ -34,6 +38,8 @@ export class PresentValue<
   Type extends ApplicationTagValueTypeMap[Tag] = ApplicationTagValueTypeMap[Tag],
 > extends BDSingletProperty<Tag, Type> {
     #parent: BDNumericObject<Tag, Type> | BDBinaryObject<Tag, Type> | BDMultistateObject<Tag, Type>;
+        #lastObjectCovEmitValue: Type | undefined;
+        #parentAfterCovWired = false;
 
     #onRelinquishDefaultAfterCov = async () => {
         // Relinquish_Default only drives Present_Value when no command priority is active.
@@ -54,6 +60,61 @@ export class PresentValue<
 
     override async setValue(value: Type, priority: number = 16): Promise<void> {
         await this.___writeData({ ...this.getData(), value }, true, priority);
+    }
+
+    /**
+     * Prevent BDObject's default presentValue->object aftercov wiring so
+     * presentValue can control when parent object aftercov is emitted.
+     */
+    override on<K extends EventKey<BDPropertyEvents<Tag, Type, BACNetAppData<Tag, Type>>>>(event: K, cb: EventListener<BDPropertyEvents<Tag, Type, BACNetAppData<Tag, Type>>, K>) {
+        if (event === "aftercov" && !this.#parentAfterCovWired) {
+            this.#parentAfterCovWired = true;
+            return this;
+        }
+
+        return super.on(event, cb);
+    }
+
+    override async setData(data: BACNetAppData<Tag, Type>) {
+        const previousValue = this.getData().value;
+        if (isDeepStrictEqual(previousValue, data.value)) {
+            await super.setData(data);
+            return;
+        }
+
+        // Always emit property-level COV notifications for Present_Value changes.
+        await super.setData(data);
+
+        // Non-numeric objects do not support COV_INCREMENT filtering.
+        if (!(this.#parent instanceof BDNumericObject) || typeof data.value !== "number") {
+            await this.#emitParentAfterCov(data);
+            return;
+        }
+
+        const covIncrement = this.#parent.covIncrement.getData().value;
+        if (typeof covIncrement !== "number" || covIncrement <= 0) {
+            this.#lastObjectCovEmitValue = data.value;
+            await this.#emitParentAfterCov(data);
+            return;
+        }
+
+        if (typeof this.#lastObjectCovEmitValue !== "number") {
+            this.#lastObjectCovEmitValue = data.value;
+            await this.#emitParentAfterCov(data);
+            return;
+        }
+
+        const change = Math.abs(data.value - this.#lastObjectCovEmitValue);
+        if (change < covIncrement) {
+            return;
+        }
+
+        this.#lastObjectCovEmitValue = data.value;
+        await this.#emitParentAfterCov(data);
+    }
+
+    async #emitParentAfterCov(data: BACNetAppData<Tag, Type>) {
+        await this.#parent.___asyncEmitSeries(false, "aftercov", data, this, this.#parent);
     }
 
     /**
