@@ -104,9 +104,6 @@ export class PresentValue<
         //If priority array does not exist, require out of service to be true to write a value. (For input values).
         if(!this.#parent.priorityArray && !outOfService) { throw new BDError('input is not out of service', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
       
-        //When out of service is true, reject null value writes as they are intended to clear priority array values.
-        if(outOfService && data.value === null) { throw new BDError('cannot write null value to present value when out of service', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
-
         //For multistate objects, validate that the value is a valid integer within the range of states.
         //Allow null here because null is used to release a priority slot for commandable objects.
         if(this.#parent instanceof BDMultistateObject && this.#parent.stateText && this.#parent.numberOfStates) {
@@ -120,7 +117,7 @@ export class PresentValue<
 
         //If priority array exists, write to the priority array, then check active array priority.
         //Write new priority to current command priority, and update present value with highest priority value.
-        if(!outOfService && this.#parent.priorityArray && this.#parent.relinquishDefault) {
+        if(this.#parent.priorityArray && this.#parent.relinquishDefault) {
             const priorityWriteData = data.value === null
                 ? { type: ApplicationTag.NULL, value: null }
                 : data;
@@ -136,7 +133,7 @@ export class PresentValue<
             return this.setData(activePriority ? this.#parent.priorityArray.getDataAtPriority(activePriority) : this.#parent.relinquishDefault.getData());
         }
 
-        //If out of service is true, write directly to present value.
+        //If no priority array exists, the object behaves like an input and may only be written out of service.
         return this.setData(data);
     }
 }

@@ -735,7 +735,7 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
       const _value = value?.value;
       const _priority = value?.priority;
       const _property = value?.property ?? property;
-      if (!_value || !_property) {
+      if (typeof _value === "undefined" || !_property) {
         throw new BDError('inconsistent parameters', ErrorCode.INCONSISTENT_PARAMETERS, ErrorClass.SERVICES);
       }
       await this.#getObjectByIdOrThrow(objectId).___writeProperty(_property, _value, _priority);
