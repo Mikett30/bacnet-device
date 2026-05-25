@@ -18,7 +18,7 @@ describe('BinaryValue', () => {
       name: 'Test BV',
       description: 'A test binary value',
       writable: false,
-      presentValue: false,
+      presentValue: BinaryPV.INACTIVE,
     }));
   });
 
@@ -111,7 +111,7 @@ describe('BinaryValue (writable)', () => {
     device.addObject(new BDBinaryValue({
       name: 'Writable BV',
       writable: true,
-      presentValue: false,
+      presentValue: BinaryPV.INACTIVE,
     }));
   });
 
@@ -160,12 +160,12 @@ describe('BinaryValue (multiple objects)', () => {
     device.addObject(new BDBinaryValue({
       name: 'Alarm BV',
       writable: false,
-      presentValue: false,
+      presentValue: BinaryPV.INACTIVE,
     }));
     device.addObject(new BDBinaryValue({
       name: 'Status BV',
       writable: false,
-      presentValue: true,
+      presentValue: BinaryPV.ACTIVE,
     }));
   });
 

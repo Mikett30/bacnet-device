@@ -32,6 +32,7 @@ import bacnet, {
   ErrorClass,
   ObjectType,
   ApplicationTag,
+  CharacterStringEncoding,
   PropertyIdentifier,
   Segmentation,
   DeviceStatus,
@@ -276,16 +277,16 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
       PropertyIdentifier.VENDOR_IDENTIFIER, ApplicationTag.UNSIGNED_INTEGER, this.#vendorId));
 
     this.vendorName = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.VENDOR_NAME, ApplicationTag.CHARACTER_STRING, opts.vendorName ?? '@bacnet-js'));
+      PropertyIdentifier.VENDOR_NAME, ApplicationTag.CHARACTER_STRING, opts.vendorName ?? '@bacnet-js', false, CharacterStringEncoding.UTF_8));
 
     this.modelName = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.MODEL_NAME, ApplicationTag.CHARACTER_STRING, opts.modelName ?? '@bacnet-js/device'));
+      PropertyIdentifier.MODEL_NAME, ApplicationTag.CHARACTER_STRING, opts.modelName ?? '@bacnet-js/device', false, CharacterStringEncoding.UTF_8));
 
     this.firmwareRevision = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.FIRMWARE_REVISION, ApplicationTag.CHARACTER_STRING, opts.firmwareRevision ?? '0.0.1'));
+      PropertyIdentifier.FIRMWARE_REVISION, ApplicationTag.CHARACTER_STRING, opts.firmwareRevision ?? '0.0.1', false, CharacterStringEncoding.UTF_8));
 
     this.applicationSoftwareVersion = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.APPLICATION_SOFTWARE_VERSION, ApplicationTag.CHARACTER_STRING, opts.applicationSoftwareVersion ?? '0.0.1'));
+      PropertyIdentifier.APPLICATION_SOFTWARE_VERSION, ApplicationTag.CHARACTER_STRING, opts.applicationSoftwareVersion ?? '0.0.1', false, CharacterStringEncoding.UTF_8));
 
     this.databaseRevision = this.addProperty(new BDSingletProperty(
       PropertyIdentifier.DATABASE_REVISION, ApplicationTag.UNSIGNED_INTEGER, opts.databaseRevision ?? 1));
@@ -297,10 +298,10 @@ export class BDDevice extends BDObject implements AsyncEventEmitter<BDDeviceEven
 
     // In your device constructor
     this.location = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.LOCATION, ApplicationTag.CHARACTER_STRING, opts.location ?? 'w'));
+      PropertyIdentifier.LOCATION, ApplicationTag.CHARACTER_STRING, opts.location ?? 'w', false, CharacterStringEncoding.UTF_8));
 
     this.serialNumber = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.SERIAL_NUMBER, ApplicationTag.CHARACTER_STRING, opts.serialNumber ?? 'w'));
+      PropertyIdentifier.SERIAL_NUMBER, ApplicationTag.CHARACTER_STRING, opts.serialNumber ?? 'w', false, CharacterStringEncoding.UTF_8));
 
     // ======================== APDU-RELATED PROPERTIES =======================
 

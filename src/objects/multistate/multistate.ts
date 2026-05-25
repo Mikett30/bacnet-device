@@ -6,6 +6,7 @@ import { PresentValue, type PresentValueOpts } from '../../properties/presentval
 import {
   ObjectType,
   ApplicationTag,
+  CharacterStringEncoding,
   PropertyIdentifier,
   type ApplicationTagValueTypeMap,
   type BACNetAppData,
@@ -26,7 +27,7 @@ export class BDMultistateObject<
 > extends BDObject {
   readonly presentValue: PresentValue<Tag, Type>;
   readonly priorityArray?: BDArrayProperty<Tag>;
-  readonly currentCommandPriority?: BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>;
+  readonly currentCommandPriority?: BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER | ApplicationTag.NULL, number | null>;
   readonly relinquishDefault?: BDSingletProperty<Tag>;
   readonly outOfService: BDSingletProperty<ApplicationTag.BOOLEAN>;
   readonly stateText?: BDPolledArrayProperty<ApplicationTag.CHARACTER_STRING>;
@@ -36,6 +37,11 @@ export class BDMultistateObject<
     super(type, opts);
 
     opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
+
+    //Multistate inputs don't have these commandable properties.
+    if(type !== ObjectType.MULTI_STATE_INPUT) {
+      this.relinquishDefault = this.addProperty(new BDSingletProperty<Tag, Type>(PropertyIdentifier.RELINQUISH_DEFAULT, tag, opts.relinquishDefault ?? 1 as Type, opts.writable?.RELINQUISH_DEFAULT));
+    }
 
     //Create a present value properties that is tied to other properties.
     const presentValue = new PresentValue<Tag, Type>(tag, opts.presentValue ?? opts.relinquishDefault ?? 1 as Type, this, opts as PresentValueOpts<Type>);
@@ -48,13 +54,12 @@ export class BDMultistateObject<
     //Force multistate state text to be an array of at least 2 states, as required by the standard.
     opts.states = Array.isArray(opts.states) ? [...opts.states, ...Array.from({ length: Math.max(0, 2 - opts.states.length) }, (_, i) => `State ${i + opts.states!.length + 1}`)] : ["State 1", "State 2"];
     
-    const stateTextData: BACNetAppData<ApplicationTag.CHARACTER_STRING>[] = opts.states.map(state => ({ type: ApplicationTag.CHARACTER_STRING, value: state }));
+    const stateTextData: BACNetAppData<ApplicationTag.CHARACTER_STRING>[] = opts.states.map(state => ({ type: ApplicationTag.CHARACTER_STRING, value: state, encoding: CharacterStringEncoding.UTF_8 }));
     this.stateText = this.addProperty(new BDPolledArrayProperty<ApplicationTag.CHARACTER_STRING>(PropertyIdentifier.STATE_TEXT, () => stateTextData));
 
-    //Multistate inputs don't have these properties.
+    //Multistate inputs don't have these commandable properties.
     if(type !== ObjectType.MULTI_STATE_INPUT) {
-      this.relinquishDefault = this.addProperty(new BDSingletProperty<Tag, Type>(PropertyIdentifier.RELINQUISH_DEFAULT, tag, opts.relinquishDefault ?? 1 as Type, opts.writable?.RELINQUISH_DEFAULT));
-      this.currentCommandPriority = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>(PropertyIdentifier.CURRENT_COMMAND_PRIORITY, ApplicationTag.UNSIGNED_INTEGER, 0, false));
+      this.currentCommandPriority = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER | ApplicationTag.NULL, number | null>(PropertyIdentifier.CURRENT_COMMAND_PRIORITY, ApplicationTag.NULL, null, false));
       this.priorityArray = this.addProperty(new BDArrayProperty(PropertyIdentifier.PRIORITY_ARRAY));
     }
   }

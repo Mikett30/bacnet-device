@@ -41,6 +41,10 @@ export class BDArrayProperty<
   }
 
   async setDataAtPriority(data: BACNetAppData<Tag, Type>, priority: number) {
+    if(data.value === null) {
+      data = { type: ApplicationTag.NULL, value: null } as BACNetAppData<Tag, Type>;
+    }
+
     const nextData = [...this.#data];
     nextData[priority - 1] = data;
     await this.___asyncEmitSeries(true, 'beforecov', nextData, this);
@@ -63,6 +67,11 @@ export class BDArrayProperty<
           data = data[0];
       }
     }
+
+    if(data.value === null) {
+      data = { type: ApplicationTag.NULL, value: null } as BACNetAppData<Tag, Type>;
+    }
+
     await this.setDataAtPriority(data, priority);
   }
   
@@ -71,6 +80,6 @@ export class BDArrayProperty<
    * @returns Returns the highest active priority level, or 0 if not being controlled.
    */
   getActivePriority() {
-    return this.#data.findIndex(val => val.type !== ApplicationTag.NULL) + 1;
+    return this.#data.findIndex(val => val.type !== ApplicationTag.NULL && val.value !== null && val.value !== undefined) + 1;
   }
 }

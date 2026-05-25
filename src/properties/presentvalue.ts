@@ -5,6 +5,7 @@ import {
     ErrorCode,
     ErrorClass,
     ApplicationTag,
+    BinaryPV,
 } from "@bacnet-js/client";
 
 import {
@@ -34,11 +35,21 @@ export class PresentValue<
 > extends BDSingletProperty<Tag, Type> {
     #parent: BDNumericObject<Tag, Type> | BDBinaryObject<Tag, Type> | BDMultistateObject<Tag, Type>;
 
+    #onRelinquishDefaultAfterCov = async () => {
+        // Relinquish_Default only drives Present_Value when no command priority is active.
+        if(this.#parent.priorityArray && this.#parent.relinquishDefault && !this.#parent.priorityArray.getActivePriority()) {
+            await this.setData(this.#parent.relinquishDefault.getData());
+        }
+    }
+
     constructor(tag: Tag, value: Type, parent: BDNumericObject<Tag, Type> | BDBinaryObject<Tag, Type> | BDMultistateObject<Tag, Type>, opts: PresentValueOpts<Type>) {
         super(PropertyIdentifier.PRESENT_VALUE, tag, value, opts.writable?.PRESENT_VALUE);
 
         //Store reference to parent object to allow present value to access other properties.
         this.#parent = parent;
+
+        // Keep Present_Value in sync with Relinquish_Default when no slot in Priority_Array is active.
+        this.#parent.relinquishDefault?.on('aftercov', this.#onRelinquishDefaultAfterCov);
     }
 
     override async setValue(value: Type, priority: number = 16): Promise<void> {
@@ -76,6 +87,17 @@ export class PresentValue<
             data = data[0];
         }
 
+        //For binary objects, normalize booleans to BinaryPV and enforce enum domain.
+        if(this.#parent instanceof BDBinaryObject) {
+            if(data.value === true) {
+                data = { ...data, type: ApplicationTag.ENUMERATED as Tag, value: BinaryPV.ACTIVE as Type };
+            } else if(data.value === false) {
+                data = { ...data, type: ApplicationTag.ENUMERATED as Tag, value: BinaryPV.INACTIVE as Type };
+            } else if(data.value !== null && data.value !== BinaryPV.ACTIVE && data.value !== BinaryPV.INACTIVE) {
+                throw new BDError('value is out of range', ErrorCode.VALUE_OUT_OF_RANGE, ErrorClass.PROPERTY);
+            }
+        }
+
         //Get out of service value.
         const outOfService = this.#parent.outOfService.getData().value;
 
@@ -86,17 +108,31 @@ export class PresentValue<
         if(outOfService && data.value === null) { throw new BDError('cannot write null value to present value when out of service', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
 
         //For multistate objects, validate that the value is a valid integer within the range of states.
+        //Allow null here because null is used to release a priority slot for commandable objects.
         if(this.#parent instanceof BDMultistateObject && this.#parent.stateText && this.#parent.numberOfStates) {
-            if(!Number.isInteger(data.value)) { throw new BDError('value is not an integer', ErrorCode.INVALID_DATA_TYPE, ErrorClass.PROPERTY); }
-            if(data.value < 1 || data.value > this.#parent.numberOfStates.getData().value) { throw new BDError('value is out of range', ErrorCode.VALUE_OUT_OF_RANGE, ErrorClass.PROPERTY); }
+            if(data.value === null) {
+                //No-op: null is handled by priority-array release logic below.
+            } else {
+                if(!Number.isInteger(data.value)) { throw new BDError('value is not an integer', ErrorCode.INVALID_DATA_TYPE, ErrorClass.PROPERTY); }
+                if(data.value < 1 || data.value > this.#parent.numberOfStates.getData().value) { throw new BDError('value is out of range', ErrorCode.VALUE_OUT_OF_RANGE, ErrorClass.PROPERTY); }
+            }
         }
 
         //If priority array exists, write to the priority array, then check active array priority.
         //Write new priority to current command priority, and update present value with highest priority value.
         if(!outOfService && this.#parent.priorityArray && this.#parent.relinquishDefault) {
-            this.#parent.priorityArray.___writeData(data as any, false, priority);
+            const priorityWriteData = data.value === null
+                ? { type: ApplicationTag.NULL, value: null }
+                : data;
+
+            await this.#parent.priorityArray.___writeData(priorityWriteData as any, false, priority);
             const activePriority = this.#parent.priorityArray.getActivePriority();
-            this.#parent.currentCommandPriority?.setValue(activePriority);
+            const currentCommandPriorityData: BACNetAppData<ApplicationTag.UNSIGNED_INTEGER | ApplicationTag.NULL, number | null> = activePriority
+                ? { type: ApplicationTag.UNSIGNED_INTEGER, value: activePriority }
+                : { type: ApplicationTag.NULL, value: null };
+            await this.#parent.currentCommandPriority?.setData(
+                currentCommandPriorityData
+            );
             return this.setData(activePriority ? this.#parent.priorityArray.getDataAtPriority(activePriority) : this.#parent.relinquishDefault.getData());
         }
 

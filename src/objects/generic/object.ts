@@ -22,6 +22,7 @@ import {
   EventState,
   Reliability,
   ApplicationTag,
+  CharacterStringEncoding,
   PropertyIdentifier,
   StatusFlagsBitString,
 } from '@bacnet-js/client';
@@ -120,7 +121,7 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
     opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
 
     this.objectName = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.OBJECT_NAME, ApplicationTag.CHARACTER_STRING, opts.name, opts.writable?.OBJECT_NAME ?? false));
+      PropertyIdentifier.OBJECT_NAME, ApplicationTag.CHARACTER_STRING, opts.name, opts.writable?.OBJECT_NAME ?? false, CharacterStringEncoding.UTF_8));
 
     this.objectType = this.addProperty(new BDSingletProperty(
       PropertyIdentifier.OBJECT_TYPE, ApplicationTag.ENUMERATED, type));
@@ -132,7 +133,7 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
       PropertyIdentifier.PROPERTY_LIST, () => this.#propertyList));
 
     this.description = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, opts?.description ?? "", opts?.writable?.DESCRIPTION ?? false));
+      PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, opts?.description ?? "", opts?.writable?.DESCRIPTION ?? false, CharacterStringEncoding.UTF_8));
 
     this.statusFlags = this.addProperty(new BDSingletProperty<ApplicationTag.BIT_STRING, StatusFlagsBitString>(
       PropertyIdentifier.STATUS_FLAGS, ApplicationTag.BIT_STRING, new StatusFlagsBitString()));

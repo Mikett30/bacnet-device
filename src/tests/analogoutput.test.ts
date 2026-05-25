@@ -140,6 +140,16 @@ describe('AnalogOutput (writable)', () => {
     deepStrictEqual(parseFloat(value), 0);
   });
 
+  it('should recalculate Present_Value when Relinquish_Default changes and no priorities are active', async () => {
+    await bsWriteProperty(1, ObjectType.ANALOG_OUTPUT, 1, PropertyIdentifier.RELINQUISH_DEFAULT, 16, ApplicationTag.REAL, 42.25);
+
+    const presentValue = await bsReadProperty(1, ObjectType.ANALOG_OUTPUT, 1, PropertyIdentifier.PRESENT_VALUE);
+    deepStrictEqual(parseFloat(presentValue), 42.25);
+
+    const currentPriority = await bsReadProperty(1, ObjectType.ANALOG_OUTPUT, 1, PropertyIdentifier.CURRENT_COMMAND_PRIORITY);
+    deepStrictEqual(currentPriority.trim(), 'Null');
+  });
+
 });
 
 describe('AnalogOutput (multiple objects)', () => {

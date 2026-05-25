@@ -39,7 +39,7 @@ export class BDNumericObject<
   readonly maxPresentValue: BDSingletProperty<Tag>;
   readonly minPresentValue: BDSingletProperty<Tag>;
   readonly priorityArray?: BDArrayProperty<Tag>;
-  readonly currentCommandPriority?: BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>;
+  readonly currentCommandPriority?: BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER | ApplicationTag.NULL, number | null>;
   readonly relinquishDefault?: BDSingletProperty<Tag>;
   readonly outOfService: BDSingletProperty<ApplicationTag.BOOLEAN>;
 
@@ -47,6 +47,11 @@ export class BDNumericObject<
     super(type, opts);
 
     opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
+
+    //Analog inputs don't have these commandable properties.
+    if(type !== ObjectType.ANALOG_INPUT) {
+      this.relinquishDefault = this.addProperty(new BDSingletProperty<Tag, Type>(PropertyIdentifier.RELINQUISH_DEFAULT, tag, opts.relinquishDefault ?? 0 as Type, opts.writable?.RELINQUISH_DEFAULT));
+    }
 
     //Create a present value properties that is tied to other properties.
     const presentValue = new PresentValue<Tag, Type>(tag, opts.presentValue ?? opts.relinquishDefault ?? 0 as Type, this, opts as PresentValueOpts<Type>);
@@ -59,10 +64,9 @@ export class BDNumericObject<
     this.maxPresentValue = this.addProperty(new BDSingletProperty(PropertyIdentifier.MAX_PRES_VALUE, tag, Math.min(opts?.maxPresentValue ?? Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER) as Type, opts?.writable?.MAX_PRES_VALUE ?? false));
     this.minPresentValue = this.addProperty(new BDSingletProperty(PropertyIdentifier.MIN_PRES_VALUE, tag, Math.max(opts?.minPresentValue ?? Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER) as Type, opts?.writable?.MIN_PRES_VALUE ?? false));
 
-    //Analog inputs don't have these properties.
+    //Analog inputs don't have these commandable properties.
     if(type !== ObjectType.ANALOG_INPUT) {
-      this.relinquishDefault = this.addProperty(new BDSingletProperty<Tag, Type>(PropertyIdentifier.RELINQUISH_DEFAULT, tag, opts.relinquishDefault ?? 0 as Type, opts.writable?.RELINQUISH_DEFAULT));
-      this.currentCommandPriority = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER>(PropertyIdentifier.CURRENT_COMMAND_PRIORITY, ApplicationTag.UNSIGNED_INTEGER, 0, false));
+      this.currentCommandPriority = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER | ApplicationTag.NULL, number | null>(PropertyIdentifier.CURRENT_COMMAND_PRIORITY, ApplicationTag.NULL, null, false));
       this.priorityArray = this.addProperty(new BDArrayProperty(PropertyIdentifier.PRIORITY_ARRAY));
     }
   }
