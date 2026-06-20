@@ -10,15 +10,15 @@ import {
 
 import {
   BDAbstractArrayProperty,
-} from './abstract.js';
+} from './abstract.ts';
 
 import {
   BDError,
-} from '../../errors.js';
+} from '../../errors.ts';
 
 import {
   type BDPropertyAccessContext,
-} from './../types.js';
+} from './../types.ts';
 
 
 /**

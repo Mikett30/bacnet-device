@@ -24,13 +24,13 @@ class ThermostatDevice extends BDDevice {
 
     this.targetTemp = this.addObject(new BDAnalogValue({
       name: 'Target Temperature',
-      unit: EngineeringUnits.DEGREES_CELSIUS,
+      units: EngineeringUnits.DEGREES_CELSIUS,
       writable: true,
     }));
 
     this.currentTemp = this.addObject(new BDAnalogValue({
       name: 'Current Temperature',
-      unit: EngineeringUnits.DEGREES_CELSIUS,
+      units: EngineeringUnits.DEGREES_CELSIUS,
       writable: false,
     }));
 

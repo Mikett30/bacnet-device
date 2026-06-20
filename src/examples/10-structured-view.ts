@@ -26,7 +26,7 @@ const group1 = device.addSubordinate(new BDStructuredView({
 const analogValue1_1 = group1.addSubordinate(new BDAnalogValue({
   name: 'Value 1.1',
   presentValue: 0,
-  unit: EngineeringUnits.PERCENT,
+  units: EngineeringUnits.PERCENT,
 }));
 
 const group2 = device.addSubordinate(new BDStructuredView({
@@ -40,5 +40,5 @@ const group2_1 = group2.addSubordinate(new BDStructuredView({
 const analogValue2_1_1 = group2_1.addSubordinate(new BDAnalogValue({
   name: 'Value 2.1.1',
   presentValue: 0,
-  unit: EngineeringUnits.PERCENT,
+  units: EngineeringUnits.PERCENT,
 }));

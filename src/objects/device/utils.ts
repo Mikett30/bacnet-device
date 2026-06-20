@@ -2,16 +2,16 @@
 import {
   type BACNetClientType,
   ensureArray,
-} from '../../utils.js';
+} from '../../utils.ts';
 
 import {
   type BDDevice,
-} from './device.js';
+} from './device.ts';
 
 import {
   type BDSubscription,
   type BDQueuedCov,
-} from './types.js';
+} from './types.ts';
 
 /**
  * Sends a confirmed COV (Change of Value) notification to a subscriber

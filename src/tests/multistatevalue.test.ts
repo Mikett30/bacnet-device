@@ -2,7 +2,7 @@ import { it, describe, beforeEach, afterEach } from 'node:test';
 import { deepStrictEqual } from 'node:assert';
 import { BDDevice } from '../objects/device/device.js';
 import { bsReadProperty, bsWriteProperty } from './bacnet-stack-client.js';
-import { BDMultiStateValue } from '../objects/multistatevalue.js';
+import { BDMultiStateValue } from '../objects/multistate/multistatevalue.ts';
 import { ApplicationTag, ObjectType, PropertyIdentifier } from '@bacnet-js/client';
 
 describe('MultiStateValue', () => {

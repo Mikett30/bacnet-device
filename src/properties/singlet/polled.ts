@@ -9,9 +9,9 @@ import {
   ApplicationTag,
 } from '@bacnet-js/client';
 
-import { BDError } from '../../errors.js';
-import { BDAbstractSingletProperty } from './abstract.js';
-import { type BDPropertyAccessContext } from '../types.js';
+import { BDError } from '../../errors.ts';
+import { BDAbstractSingletProperty } from './abstract.ts';
+import { type BDPropertyAccessContext } from '../types.ts';
 
 
 

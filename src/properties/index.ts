@@ -1,34 +1,34 @@
 
 export { 
   BDAbstractProperty,
-} from './abstract.js';
+} from './abstract.ts';
 
 export {  
   BDSingletProperty,
-} from './singlet/singlet.js';
+} from './singlet/singlet.ts';
 
 export {  
   BDPolledSingletProperty,
-} from './singlet/polled.js';
+} from './singlet/polled.ts';
 
 export {  
   BDAbstractSingletProperty,
-} from './singlet/abstract.js';
+} from './singlet/abstract.ts';
 
 export { 
   BDArrayProperty,
-} from './array/array.js';
+} from './array/array.ts';
 
 export { 
   BDPolledArrayProperty,
-} from './array/polled.js';
+} from './array/polled.ts';
 
 export { 
   BDAbstractArrayProperty,
-} from './array/abstract.js';
+} from './array/abstract.ts';
 
 export {
   type BDPropertyEvents,
   type BDPropertyAccessContext,
   BDPropertyType,
-} from './types.js';
+} from './types.ts';

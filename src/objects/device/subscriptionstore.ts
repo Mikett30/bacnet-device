@@ -6,14 +6,14 @@ import {
 import {
     getPropertyUID,
   type BDPropertyUID,
-} from '../../uids.js';
+} from '../../uids.ts';
 
 import  {
   type BDSubscription,
   type BDSubscriptionAppData,
-} from './types.js';
+} from './types.ts';
 
-import { EMPTY_ARRAY } from '../../constants.js';
+import { EMPTY_ARRAY } from '../../constants.ts';
 
 /**
  * Comparator for sorting subscriptions by expiration date in ascending order.

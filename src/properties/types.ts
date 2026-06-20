@@ -8,11 +8,11 @@ import {
 import {
   type EventMap,
   AsyncEventEmitter,
-} from '../events.js';
+} from '../events.ts';
 
 import {
   type BDAbstractProperty,
-} from './abstract.js';
+} from './abstract.ts';
 
 /**
  * Maps the names of property events to the respective arrays of arguments.

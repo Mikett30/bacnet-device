@@ -8,23 +8,23 @@ import {
   ErrorClass,
   ApplicationTag,
 } from '@bacnet-js/client';
+import { isDeepStrictEqual } from 'node:util';
 
-import { BDError } from '../../errors.js';
-import { BDAbstractSingletProperty } from './abstract.js';
-import { type BDPropertyAccessContext } from '../types.js';
+import { BDError } from '../../errors.ts';
+import { BDAbstractSingletProperty } from './abstract.ts';
+import { type BDPropertyAccessContext } from '../types.ts';
 
 export class BDSingletProperty<
   Tag extends ApplicationTag,
   Type extends ApplicationTagValueTypeMap[Tag] = ApplicationTagValueTypeMap[Tag],
 > extends BDAbstractSingletProperty<Tag, Type> {
 
-  #writable: boolean;
   #data: BACNetAppData<Tag, Type>;
 
-  constructor(identifier: PropertyIdentifier, type: Tag, writable: boolean, value: Type, encoding?: CharacterStringEncoding) {
+  constructor(identifier: PropertyIdentifier, type: Tag, value: Type, writable: boolean = false, encoding?: CharacterStringEncoding, debug: boolean = false) {
     super(identifier);
     this.#data = { type, value, encoding };
-    this.#writable = writable;
+    this.writable = this.writable = !!writable;
   }
 
   getData(ctx?: BDPropertyAccessContext): BACNetAppData<Tag, Type> {
@@ -36,6 +36,11 @@ export class BDSingletProperty<
   }
 
   async setData(data: BACNetAppData<Tag, Type>) {
+    if (isDeepStrictEqual(this.#data.value, data.value)) {
+      this.#data = data;
+      return;
+    }
+
     await this.___asyncEmitSeries(true, 'beforecov', data, this);
     this.#data = data;
     await this.___asyncEmitSeries(false, 'aftercov', data, this);
@@ -57,10 +62,9 @@ export class BDSingletProperty<
    *
    * @internal
    */
-  async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[]) {
-    if (!this.#writable) {
-      throw new BDError('not writable', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY);
-    }
+  async ___writeData(data: BACNetAppData<Tag, Type> | BACNetAppData<Tag, Type>[], force: boolean = false): Promise<void> {
+    if(!force && !this.writable) { throw new BDError('property is not writable', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY); }
+
     if (Array.isArray(data)) {
       if (data.length !== 1) {
         throw new BDError('property is not an array or list', ErrorCode.WRITE_ACCESS_DENIED, ErrorClass.PROPERTY);
@@ -70,5 +74,4 @@ export class BDSingletProperty<
     }
     await this.setData(data);
   }
-
 }

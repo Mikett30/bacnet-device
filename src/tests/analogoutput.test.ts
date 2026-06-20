@@ -17,7 +17,7 @@ describe('AnalogOutput', () => {
     device.addObject(new BDAnalogOutput({
       name: 'Test AO',
       description: 'A test analog output',
-      unit: EngineeringUnits.PERCENT,
+      units: EngineeringUnits.PERCENT,
       presentValue: 75,
       covIncrement: 2,
       minPresentValue: 0,
@@ -117,7 +117,7 @@ describe('AnalogOutput (writable)', () => {
     device.on('error', console.error);
     device.addObject(new BDAnalogOutput({
       name: 'Writable AO',
-      unit: EngineeringUnits.PERCENT,
+      units: EngineeringUnits.PERCENT,
       presentValue: 0,
       writable: true,
     }));
@@ -140,6 +140,16 @@ describe('AnalogOutput (writable)', () => {
     deepStrictEqual(parseFloat(value), 0);
   });
 
+  it('should recalculate Present_Value when Relinquish_Default changes and no priorities are active', async () => {
+    await bsWriteProperty(1, ObjectType.ANALOG_OUTPUT, 1, PropertyIdentifier.RELINQUISH_DEFAULT, 16, ApplicationTag.REAL, 42.25);
+
+    const presentValue = await bsReadProperty(1, ObjectType.ANALOG_OUTPUT, 1, PropertyIdentifier.PRESENT_VALUE);
+    deepStrictEqual(parseFloat(presentValue), 42.25);
+
+    const currentPriority = await bsReadProperty(1, ObjectType.ANALOG_OUTPUT, 1, PropertyIdentifier.CURRENT_COMMAND_PRIORITY);
+    deepStrictEqual(currentPriority.trim(), 'Null');
+  });
+
 });
 
 describe('AnalogOutput (multiple objects)', () => {
@@ -153,12 +163,12 @@ describe('AnalogOutput (multiple objects)', () => {
     device.on('error', console.error);
     device.addObject(new BDAnalogOutput({
       name: 'Valve Output',
-      unit: EngineeringUnits.PERCENT,
+      units: EngineeringUnits.PERCENT,
       presentValue: 50,
     }));
     device.addObject(new BDAnalogOutput({
       name: 'Damper Output',
-      unit: EngineeringUnits.PERCENT,
+      units: EngineeringUnits.PERCENT,
       presentValue: 75,
     }));
   });

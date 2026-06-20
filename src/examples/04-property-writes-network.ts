@@ -14,7 +14,7 @@ const device = new BDDevice(1, {
 
 const analogValue = device.addObject(new BDAnalogValue({
   name: 'Writable Analog Value',
-  unit: EngineeringUnits.VOLTS,
+  units: EngineeringUnits.VOLTS,
   writable: true,
   presentValue: 0,
 }));

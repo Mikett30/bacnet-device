@@ -1,6 +1,6 @@
 
-import { BDSingletProperty } from '../properties/index.js';
-import { BDObject } from './generic/object.js';
+import { BDSingletProperty } from '../properties/index.ts';
+import { BDObject } from './generic/object.ts';
 import {
   ObjectType,
   ApplicationTag,
@@ -20,10 +20,10 @@ export class BDCharacterStringValue extends BDObject {
   readonly presentValue: BDSingletProperty<ApplicationTag.CHARACTER_STRING>;
 
   constructor(opts: BDCharacterStringValueOpts) {
-    super(ObjectType.CHARACTERSTRING_VALUE, opts.name, opts.description);
+    super(ObjectType.CHARACTERSTRING_VALUE, opts);
 
     this.presentValue = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.PRESENT_VALUE, ApplicationTag.CHARACTER_STRING, opts.writable ?? false, opts.presentValue ?? '', CharacterStringEncoding.UTF_8));
+      PropertyIdentifier.PRESENT_VALUE, ApplicationTag.CHARACTER_STRING, opts.presentValue ?? '', opts.writable ?? false, CharacterStringEncoding.UTF_8));
 
   }
 }

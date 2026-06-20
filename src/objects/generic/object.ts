@@ -8,13 +8,12 @@
  * @module
  */
 
-import { AsyncEventEmitter, type EventMap } from '../../events.js';
+import { AsyncEventEmitter, type EventMap } from '../../events.ts';
 
-import { BDError } from '../../errors.js';
+import { BDError } from '../../errors.ts';
 
 import {
   type BACNetAppData,
-  type BACNetObjectID,
   type BACNetPropertyID,
   type BACNetReadAccess,
   ErrorCode,
@@ -23,13 +22,14 @@ import {
   EventState,
   Reliability,
   ApplicationTag,
+  CharacterStringEncoding,
   PropertyIdentifier,
   StatusFlagsBitString,
 } from '@bacnet-js/client';
 
 import type {
   ReadPropertyMultipleContent,
-} from '@bacnet-js/client/dist/lib/EventTypes.js';
+} from '@bacnet-js/client/dist/lib/EventTypes.ts';
 
 import {
   BDAbstractProperty,
@@ -37,15 +37,12 @@ import {
   BDPolledArrayProperty,
   type BDPropertyAccessContext,
   BDPolledSingletProperty,
-} from '../../properties/index.js';
+} from '../../properties/index.ts';
 
-import { ensureArray } from '../../utils.js';
-
-import { MAX_ARRAY_INDEX } from '../../constants.js';
-
-import { TaskQueue, type Task } from '../../taskqueue.js';
-
-import type { BDDevice } from '../device/device.js';
+import { ensureArray } from '../../utils.ts';
+import { MAX_ARRAY_INDEX } from '../../constants.ts';
+import { TaskQueue, type Task } from '../../taskqueue.ts';
+import type { BDDevice } from '../device/device.ts';
 
 /**
  * Events that can be emitted by a BACnet object
@@ -54,6 +51,8 @@ export interface BDObjectEvents extends EventMap {
   /** Emitted after a property value has changed */
   aftercov: [data: BACNetAppData | BACNetAppData[], property: BDAbstractProperty<any, any, any>, object: BDObject],
 }
+
+export type BDWritableProperties = Partial<Record<Extract<keyof typeof PropertyIdentifier, string>, boolean>>;
 
 /**
  * According to the BACnet specification, certain properties should not
@@ -97,14 +96,11 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
 
   readonly #queue: TaskQueue;
 
-
-
   readonly objectName: BDSingletProperty<ApplicationTag.CHARACTER_STRING>;
   readonly objectType: BDSingletProperty<ApplicationTag.ENUMERATED, ObjectType>;
   readonly objectIdentifier: BDPolledSingletProperty<ApplicationTag.OBJECTIDENTIFIER>;
   readonly propertyList: BDPolledArrayProperty<ApplicationTag.ENUMERATED, PropertyIdentifier>;
   readonly description: BDSingletProperty<ApplicationTag.CHARACTER_STRING>;
-  readonly outOfService: BDSingletProperty<ApplicationTag.BOOLEAN>;
   readonly statusFlags: BDSingletProperty<ApplicationTag.BIT_STRING>;
   readonly eventState: BDSingletProperty<ApplicationTag.ENUMERATED, EventState>;
   readonly reliability: BDSingletProperty<ApplicationTag.ENUMERATED, Reliability>;
@@ -113,19 +109,22 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
    * Creates a new BACnet object
    *
    */
-  constructor(type: ObjectType, name: string, description: string = '') {
-
+  constructor(type: ObjectType, opts: any) {
     super();
 
     this.#queue = new TaskQueue();
     this.#properties = new Map();
     this.#propertyList = [];
 
+    // If writable is set to true, make all properties writable by default.
+    // Otherwise, use the provided writable object or default to all properties being read-only.
+    opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
+
     this.objectName = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.OBJECT_NAME, ApplicationTag.CHARACTER_STRING, false, name));
+      PropertyIdentifier.OBJECT_NAME, ApplicationTag.CHARACTER_STRING, opts.name, opts.writable?.OBJECT_NAME ?? false, CharacterStringEncoding.UTF_8));
 
     this.objectType = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.OBJECT_TYPE, ApplicationTag.ENUMERATED, false, type));
+      PropertyIdentifier.OBJECT_TYPE, ApplicationTag.ENUMERATED, type));
 
     this.objectIdentifier = this.addProperty(new BDPolledSingletProperty(
       PropertyIdentifier.OBJECT_IDENTIFIER, ApplicationTag.OBJECTIDENTIFIER, () => this.identifier.value));
@@ -134,20 +133,16 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
       PropertyIdentifier.PROPERTY_LIST, () => this.#propertyList));
 
     this.description = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, false, description));
-
-    this.outOfService = this.addProperty(new BDSingletProperty(
-      PropertyIdentifier.OUT_OF_SERVICE, ApplicationTag.BOOLEAN, false, false));
+      PropertyIdentifier.DESCRIPTION, ApplicationTag.CHARACTER_STRING, opts?.description ?? "", opts?.writable?.DESCRIPTION ?? false, CharacterStringEncoding.UTF_8));
 
     this.statusFlags = this.addProperty(new BDSingletProperty<ApplicationTag.BIT_STRING, StatusFlagsBitString>(
-      PropertyIdentifier.STATUS_FLAGS, ApplicationTag.BIT_STRING, false, new StatusFlagsBitString()));
+      PropertyIdentifier.STATUS_FLAGS, ApplicationTag.BIT_STRING, new StatusFlagsBitString()));
 
     this.eventState = this.addProperty(new BDSingletProperty<ApplicationTag.ENUMERATED, EventState>(
-      PropertyIdentifier.EVENT_STATE, ApplicationTag.ENUMERATED, false, EventState.NORMAL));
+      PropertyIdentifier.EVENT_STATE, ApplicationTag.ENUMERATED, EventState.NORMAL));
 
     this.reliability = this.addProperty(new BDSingletProperty<ApplicationTag.ENUMERATED, Reliability>(
-      PropertyIdentifier.RELIABILITY, ApplicationTag.ENUMERATED, false, Reliability.NO_FAULT_DETECTED));
-
+      PropertyIdentifier.RELIABILITY, ApplicationTag.ENUMERATED, Reliability.NO_FAULT_DETECTED));
   }
 
   get identifier(): BACNetAppData<ApplicationTag.OBJECTIDENTIFIER> {
@@ -203,17 +198,19 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
    *
    * @param identifier - The identifier of the property to write
    * @param value - The value to write to the property
+   * @param priority - The priority of the write operation (if applicable)
    * @throws BACnetError if the property does not exist
    * @internal
    */
-  async ___writeProperty(identifier: BACNetPropertyID, value: BACNetAppData | BACNetAppData[]): Promise<void> {
+  async ___writeProperty(identifier: BACNetPropertyID, value: BACNetAppData | BACNetAppData[], priority: number = 16): Promise<void> {
+    //Inputs are only writable when Out_Of_Service is true.
     const property = this.#properties.get(identifier.id as PropertyIdentifier);
-    // TODO: test/validate value before setting it!
-    if (property) {
-      await property.___writeData(value);
-    } else {
-      throw new BDError('unknown property', ErrorCode.UNKNOWN_PROPERTY, ErrorClass.PROPERTY);
-    }
+
+    //Reject writes if unknown property.
+    if(!property) { throw new BDError('unknown property', ErrorCode.UNKNOWN_PROPERTY, ErrorClass.PROPERTY); }
+
+    //Otherwise, just write the value directly to the property.
+    await property.___writeData(value, false, priority);
   }
 
   /**
@@ -329,6 +326,12 @@ export class BDObject extends AsyncEventEmitter<BDObjectEvents> {
    * @private
    */
   #onPropertyAfterCov = async (value: BACNetAppData | BACNetAppData[], property: BDAbstractProperty<any, any, any>) => {
+    // Point-like objects (those with PRESENT_VALUE) only propagate object-level
+    // aftercov when PRESENT_VALUE changes.
+    if (this.#properties.has(PropertyIdentifier.PRESENT_VALUE) && property.identifier !== PropertyIdentifier.PRESENT_VALUE) {
+      return;
+    }
+
     await this.___asyncEmitSeries(false, 'aftercov', value, property, this);
   };
 

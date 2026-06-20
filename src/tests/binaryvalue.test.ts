@@ -2,7 +2,7 @@ import { it, describe, beforeEach, afterEach } from 'node:test';
 import { deepStrictEqual } from 'node:assert';
 import { BDDevice } from '../objects/device/device.js';
 import { bsReadProperty, bsWriteProperty } from './bacnet-stack-client.js';
-import { BDBinaryValue } from '../objects/binaryvalue.js';
+import { BDBinaryValue } from '../objects/binary/binaryvalue.ts';
 import { ApplicationTag, BinaryPV, ObjectType, PropertyIdentifier } from '@bacnet-js/client';
 
 describe('BinaryValue', () => {
@@ -18,7 +18,7 @@ describe('BinaryValue', () => {
       name: 'Test BV',
       description: 'A test binary value',
       writable: false,
-      presentValue: BinaryPV.ACTIVE,
+      presentValue: BinaryPV.INACTIVE,
     }));
   });
 

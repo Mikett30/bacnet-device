@@ -1,5 +1,5 @@
 
-import { type BDObjectUID } from './uids.js';
+import { type BDObjectUID } from './uids.ts';
 
 /**
  * Maximum value of the `index` parameter of `readProperty` requests.

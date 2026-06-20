@@ -17,7 +17,7 @@ describe('AnalogValue', () => {
     device.addObject(new BDAnalogValue({
       name: 'Test Value',
       description: 'A test analog value',
-      unit: EngineeringUnits.AMPERES,
+      units: EngineeringUnits.AMPERES,
       presentValue: 42.5,
       covIncrement: 1.5,
       minPresentValue: -100,
@@ -107,7 +107,7 @@ describe('AnalogValue (writable)', () => {
     device.on('error', console.error);
     device.addObject(new BDAnalogValue({
       name: 'Writable AV',
-      unit: EngineeringUnits.DEGREES_CELSIUS,
+      units: EngineeringUnits.DEGREES_CELSIUS,
       presentValue: 0,
       writable: true,
     }));
@@ -149,12 +149,12 @@ describe('AnalogValue (multiple objects)', () => {
     device.on('error', console.error);
     device.addObject(new BDAnalogValue({
       name: 'First AV',
-      unit: EngineeringUnits.AMPERES,
+      units: EngineeringUnits.AMPERES,
       presentValue: 10,
     }));
     device.addObject(new BDAnalogValue({
       name: 'Second AV',
-      unit: EngineeringUnits.VOLTS,
+      units: EngineeringUnits.VOLTS,
       presentValue: 20,
     }));
   });

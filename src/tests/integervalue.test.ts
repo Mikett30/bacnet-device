@@ -17,7 +17,7 @@ describe('IntegerValue', () => {
     device.addObject(new BDIntegerValue({
       name: 'Test IV',
       description: 'A test integer value',
-      unit: EngineeringUnits.NO_UNITS,
+      units: EngineeringUnits.NO_UNITS,
       presentValue: -42,
       covIncrement: 5,
       minPresentValue: -1000,
@@ -107,7 +107,7 @@ describe('IntegerValue (writable)', () => {
     device.on('error', console.error);
     device.addObject(new BDIntegerValue({
       name: 'Writable IV',
-      unit: EngineeringUnits.NO_UNITS,
+      units: EngineeringUnits.NO_UNITS,
       presentValue: 0,
       writable: true,
     }));
@@ -149,12 +149,12 @@ describe('IntegerValue (multiple objects)', () => {
     device.on('error', console.error);
     device.addObject(new BDIntegerValue({
       name: 'First IV',
-      unit: EngineeringUnits.NO_UNITS,
+      units: EngineeringUnits.NO_UNITS,
       presentValue: -10,
     }));
     device.addObject(new BDIntegerValue({
       name: 'Second IV',
-      unit: EngineeringUnits.NO_UNITS,
+      units: EngineeringUnits.NO_UNITS,
       presentValue: 20,
     }));
   });

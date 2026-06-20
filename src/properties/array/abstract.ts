@@ -8,11 +8,11 @@ import {
   PropertyIdentifier,
 } from '@bacnet-js/client';
  
-import { BDError } from '../../errors.js';
-import { BDAbstractProperty } from './../abstract.js';
-import { BDPropertyType, type BDPropertyAccessContext } from './../types.js';
+import { BDError } from '../../errors.ts';
+import { BDAbstractProperty } from './../abstract.ts';
+import { BDPropertyType, type BDPropertyAccessContext } from './../types.ts';
 
-import { MAX_ARRAY_INDEX } from '../../constants.js';
+import { MAX_ARRAY_INDEX } from '../../constants.ts';
 
 /**
  * Abstract base class for properties having an array or list of items as their
