@@ -48,6 +48,16 @@ export class PresentValue<
         }
     }
 
+    #onPolarityAfterCov = async () => {
+        if(!(this.#parent instanceof BDBinaryObject)) { return }
+
+        // The stored value stays untouched (it mirrors the reference). Polarity is applied in ___readData
+        // and ___writeData, so only notify listeners that the presented value changed.
+        const data = this.___readData(0, { date: new Date() } as BDPropertyAccessContext) as BACNetAppData<Tag, Type>;
+        await this.___asyncEmitSeries(false, "aftercov", data, this);
+        await this.#emitParentAfterCov(data);
+    }
+
     constructor(tag: Tag, value: Type, parent: BDNumericObject<Tag, Type> | BDBinaryObject<Tag, Type> | BDMultistateObject<Tag, Type>, opts: PresentValueOpts<Type>) {
         super(PropertyIdentifier.PRESENT_VALUE, tag, value, opts.writable?.PRESENT_VALUE);
 
@@ -56,6 +66,9 @@ export class PresentValue<
 
         // Keep Present_Value in sync with Relinquish_Default when no slot in Priority_Array is active.
         this.#parent.relinquishDefault?.on('aftercov', this.#onRelinquishDefaultAfterCov);
+
+        // Keep Present_Value in sync when the parent's polarity changes.
+        "polarity" in this.#parent && this.#parent.polarity && this.#parent.polarity.on('aftercov', this.#onPolarityAfterCov);
     }
 
     override async setValue(value: Type, priority: number = 16): Promise<void> {
@@ -122,16 +135,29 @@ export class PresentValue<
      * @internal
      */
     override ___readData(index: number, ctx: BDPropertyAccessContext): BACNetAppData | BACNetAppData[] {
-        //Check if priority array exists, if so return the highest priorty value (lowest index) that is not null.
-        //If highest priority is null, return the relinquish default value.
-        if(this.#parent.priorityArray && this.#parent.relinquishDefault) {
-            const priority = this.#parent.priorityArray.getActivePriority();
+        var presentValue = (() => {
+            //Check if priority array exists, if so return the highest priorty value (lowest index) that is not null.
+            //If highest priority is null, return the relinquish default value.
+            if(this.#parent.priorityArray && this.#parent.relinquishDefault) {
+                const priority = this.#parent.priorityArray.getActivePriority();
 
-            return priority ? this.#parent.priorityArray.getDataAtPriority(priority, ctx) : this.#parent.relinquishDefault.___readData(index, ctx);
+                return priority ? this.#parent.priorityArray.getDataAtPriority(priority, ctx) : this.#parent.relinquishDefault.___readData(index, ctx);
+            }
+
+            //Otherwise, return the present value.
+            return this.getData(ctx);
+        })();
+
+        //Check polarity and invert the present value if necessary.
+        if(this.#parent instanceof BDBinaryObject && "polarity" in this.#parent && this.#parent.polarity) {
+            const polarity = this.#parent.polarity.getData().value;
+
+            if(polarity === BinaryPV.ACTIVE && "value" in presentValue) {
+                presentValue = { ...presentValue, value: presentValue.value === BinaryPV.ACTIVE || presentValue.value === true ? BinaryPV.INACTIVE : BinaryPV.ACTIVE };
+            }
         }
 
-        //Otherwise, return the present value.
-        return this.getData(ctx);
+        return presentValue;
     }
 
     /**
@@ -156,6 +182,13 @@ export class PresentValue<
                 data = { ...data, type: ApplicationTag.ENUMERATED as Tag, value: BinaryPV.INACTIVE as Type };
             } else if(data.value !== null && data.value !== BinaryPV.ACTIVE && data.value !== BinaryPV.INACTIVE) {
                 throw new BDError('value is out of range', ErrorCode.VALUE_OUT_OF_RANGE, ErrorClass.PROPERTY);
+            }
+
+            // If the polarity is reversed, invert the present value.
+            const polarity = this.#parent.polarity?.getData().value;
+            
+            if(polarity === BinaryPV.ACTIVE && "value" in data && data.value !== null) {
+                data = { ...data, value: data.value === BinaryPV.ACTIVE ? BinaryPV.INACTIVE as Type : BinaryPV.ACTIVE as Type };
             }
         }
 

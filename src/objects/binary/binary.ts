@@ -17,9 +17,10 @@ export interface BDBinaryObjectOpts<Type = BinaryPV> {
   writable?: boolean | BDWritableProperties | undefined,
   description?: string | undefined,
   relinquishDefault?: Type | undefined,
+  polarity?: Type | undefined,
   presentValue?: Type | undefined,
   activeText?: string | undefined,
-  inactiveText?: string | undefined,
+  inactiveText?: string | undefined
 }
 
 export class BDBinaryObject<
@@ -28,6 +29,7 @@ export class BDBinaryObject<
 > extends BDObject {
   readonly presentValue: PresentValue<Tag, Type>;
   readonly priorityArray?: BDArrayProperty<Tag>;
+  readonly polarity?: BDSingletProperty<ApplicationTag.ENUMERATED>;
   readonly currentCommandPriority?: BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER | ApplicationTag.NULL, number | null>;
   readonly relinquishDefault?: BDSingletProperty<Tag>;
   readonly outOfService: BDSingletProperty<ApplicationTag.BOOLEAN>;
@@ -43,12 +45,19 @@ export class BDBinaryObject<
 
     opts.writable = typeof opts.writable === "boolean" ? (opts.writable ? new Proxy({}, { get: () => true }) as BDWritableProperties : undefined) : opts.writable;
 
-    const defaultPV = BDBinaryObject.normalizeBinaryPV(opts.presentValue ?? opts.relinquishDefault ?? BinaryPV.INACTIVE) as Type;
+    const defaultPolarity = BDBinaryObject.normalizeBinaryPV(opts.polarity ?? BinaryPV.INACTIVE) as Type;
     const defaultRelinquish = BDBinaryObject.normalizeBinaryPV(opts.relinquishDefault ?? BinaryPV.INACTIVE) as Type;
+
+    const defaultPV = BDBinaryObject.normalizeBinaryPV(opts.presentValue ?? opts.relinquishDefault ?? BinaryPV.INACTIVE) as Type;
 
     //Binary inputs don't have these commandable properties.
     if(type !== ObjectType.BINARY_INPUT) {
       this.relinquishDefault = this.addProperty(new BDSingletProperty<Tag, Type>(PropertyIdentifier.RELINQUISH_DEFAULT, tag, defaultRelinquish, opts.writable?.RELINQUISH_DEFAULT));
+    }
+
+    //Binary values don't have these properties.
+    if(type !== ObjectType.BINARY_VALUE) {
+      this.polarity = this.addProperty(new BDSingletProperty<ApplicationTag.ENUMERATED>(PropertyIdentifier.POLARITY, ApplicationTag.ENUMERATED, defaultPolarity, opts.writable?.POLARITY ?? false));
     }
 
     //Create a present value properties that is tied to other properties.
@@ -60,7 +69,7 @@ export class BDBinaryObject<
     this.activeText = this.addProperty(new BDSingletProperty<ApplicationTag.CHARACTER_STRING>(PropertyIdentifier.ACTIVE_TEXT, ApplicationTag.CHARACTER_STRING, opts?.activeText ?? 'On', opts.writable?.ACTIVE_TEXT ?? false, CharacterStringEncoding.UTF_8));
     this.inactiveText = this.addProperty(new BDSingletProperty<ApplicationTag.CHARACTER_STRING>(PropertyIdentifier.INACTIVE_TEXT, ApplicationTag.CHARACTER_STRING, opts?.inactiveText ?? 'Off', opts.writable?.INACTIVE_TEXT ?? false, CharacterStringEncoding.UTF_8));
 
-    //Binary inputs don't have these commandable properties.
+    //Binary inputs don't have these properties.
     if(type !== ObjectType.BINARY_INPUT) {
       this.currentCommandPriority = this.addProperty(new BDSingletProperty<ApplicationTag.UNSIGNED_INTEGER | ApplicationTag.NULL, number | null>(PropertyIdentifier.CURRENT_COMMAND_PRIORITY, ApplicationTag.NULL, null, false));
       this.priorityArray = this.addProperty(new BDArrayProperty(PropertyIdentifier.PRIORITY_ARRAY));
